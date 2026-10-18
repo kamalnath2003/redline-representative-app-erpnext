@@ -31,7 +31,7 @@ class CachedAtBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'بيانات غير محدّثة (لا يوجد اتصال) — آخر تحديث: $label',
+              'Offline data — last updated: $label',
               style: const TextStyle(
                 color: AppColors.midGray,
                 fontSize: 11.5,

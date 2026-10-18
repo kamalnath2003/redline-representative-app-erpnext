@@ -43,6 +43,20 @@ IconData _iconForExpenseType(String name) {
   }
 }
 
+String _labelForExpenseType(String name) {
+  return switch (name) {
+    'وجبات' => 'Meals',
+    'طريق' => 'Travel',
+    'فنادق وإقامة' => 'Hotels and Accommodation',
+    'أخرى - مصروف مندوب' => 'Other Representative Expense',
+    'أخرى - مصروف سيارة' => 'Other Vehicle Expense',
+    'زيت' => 'Oil',
+    'بنزين' => 'Fuel',
+    'صيانة' => 'Maintenance',
+    _ => name,
+  };
+}
+
 /// Expenses — rebuilt on the real accounting foundation set up this round:
 /// 8 curated `Expense Claim Type` records (the rep only ever sees these,
 /// never the raw chart of accounts), a `Treasury` picker for which real
@@ -145,14 +159,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       if (subtype == 'other') {
         _expenseType = const PickedRecord(
           name: _vehicleOtherExpenseType,
-          label: _vehicleOtherExpenseType,
+          label: 'Other Vehicle Expense',
         );
       } else if (subtype == 'oil') {
         // زيت بيمشي زي "أخرى" — مصروف مباشر بدون Vehicle Log/عداد مسافة،
         // لأنه مش محتاج تتبع كمية وقود أو مسافة زي البنزين/الصيانة.
         _expenseType = const PickedRecord(
           name: _vehicleOilExpenseType,
-          label: _vehicleOilExpenseType,
+          label: 'Oil',
         );
       }
     });
@@ -195,8 +209,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Future<void> _pickVehicle() async {
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر السيارة',
-      hintText: 'ابحث برقم اللوحة...',
+      title: 'Select Vehicle',
+      hintText: 'Search by plate number...',
       search: (query) async {
         final list = await CacheService.getSearchListCached(
           cacheDoctype: 'Vehicle_master',
@@ -279,8 +293,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Future<void> _pickServiceItem() async {
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر نوع الصيانة',
-      hintText: 'ابحث...',
+      title: 'Select Maintenance Type',
+      hintText: 'Search...',
       search: (query) async {
         final list = await ErpService.getList(
           'Vehicle Service Item',
@@ -325,7 +339,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'اختر نوع المصروف',
+                  'Select Expense Type',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                 ),
                 const SizedBox(height: 16),
@@ -337,10 +351,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       width: width,
                       child: _choiceCard(
                         icon: _iconForExpenseType(name),
-                        label: name,
+                        label: _labelForExpenseType(name),
                         onTap: () => Navigator.of(
                           context,
-                        ).pop(PickedRecord(name: name, label: name)),
+                        ).pop(
+                          PickedRecord(
+                            name: name,
+                            label: _labelForExpenseType(name),
+                          ),
+                        ),
                       ),
                     );
                   }).toList(),
@@ -436,7 +455,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       setState(_resetToStart);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('لا يوجد اتصال — تم الحفظ وسيُرسل تلقائيًا'),
+          content: Text('Offline. Saved and will be sent automatically.'),
         ),
       );
       return true;
@@ -459,7 +478,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       if (employee == null) {
         setState(
           () => _error =
-              'تعذر تحديد بيانات الموظف المرتبطة بحسابك — راجع الإدارة',
+              'Could not find the employee record linked to your account. Contact your administrator.',
         );
         return false;
       }
@@ -489,7 +508,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       final createdLog = await ErpService.createDoc('Vehicle Log', body);
       final logName = createdLog['name'] as String?;
       if (logName == null) {
-        throw Exception('لم يرجع السيرفر اسم المستند بعد الإنشاء');
+        throw Exception('The server did not return the document name after creation');
       }
 
       await _postNoteIfAny('Vehicle Log', logName);
@@ -665,7 +684,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       setState(_resetToStart);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('لا يوجد اتصال — تم الحفظ وسيُرسل تلقائيًا'),
+          content: Text('Offline. Saved and will be sent automatically.'),
         ),
       );
       return true;
@@ -693,7 +712,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       if (employee == null) {
         setState(
           () => _error =
-              'تعذر تحديد بيانات الموظف المرتبطة بحسابك — راجع الإدارة',
+              'Could not find the employee record linked to your account. Contact your administrator.',
         );
         return false;
       }
@@ -719,7 +738,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       created = true;
       final createdName = createdDoc['name'] as String?;
       if (createdName == null) {
-        throw Exception('لم يرجع السيرفر اسم المستند بعد الإنشاء');
+        throw Exception('The server did not return the document name after creation');
       }
 
       await _postNoteIfAny('Expense Claim', createdName);
@@ -747,7 +766,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: const Text('تسجيل مصروف'),
+        title: const Text('Log Expense'),
         leading: _step == _Step.chooseType
             ? null
             : IconButton(
@@ -778,14 +797,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _label('نوع المصروف'),
+          _label('Expense Type'),
           const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: _choiceCard(
                   icon: Icons.restaurant_rounded,
-                  label: 'شخصي',
+                  label: 'Personal',
                   onTap: () => setState(() {
                     _type = 'personal';
                     _step = _Step.form;
@@ -796,7 +815,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               Expanded(
                 child: _choiceCard(
                   icon: Icons.directions_car_rounded,
-                  label: 'سيارة',
+                  label: 'Vehicle',
                   onTap: () {
                     setState(() {
                       _type = 'vehicle';
@@ -819,14 +838,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _label('نوع مصروف السيارة'),
+          _label('Vehicle Expense Type'),
           const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: _choiceCard(
                   icon: Icons.local_gas_station_rounded,
-                  label: 'وقود',
+                  label: 'Fuel',
                   onTap: () => _enterVehicleSubtype('fuel'),
                 ),
               ),
@@ -834,7 +853,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               Expanded(
                 child: _choiceCard(
                   icon: Icons.opacity_rounded,
-                  label: 'زيت',
+                  label: 'Oil',
                   onTap: () => _enterVehicleSubtype('oil'),
                 ),
               ),
@@ -842,7 +861,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               Expanded(
                 child: _choiceCard(
                   icon: Icons.build_rounded,
-                  label: 'صيانة',
+                  label: 'Maintenance',
                   onTap: () => _enterVehicleSubtype('maintenance'),
                 ),
               ),
@@ -850,7 +869,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               Expanded(
                 child: _choiceCard(
                   icon: Icons.more_horiz_rounded,
-                  label: 'أخرى',
+                  label: 'Other',
                   onTap: () => _enterVehicleSubtype('other'),
                 ),
               ),
@@ -903,20 +922,20 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              _label('السيارة'),
+              _label('Vehicle'),
               _pickerField(
                 label: _vehicle?.label,
-                hint: 'اختر السيارة',
+                hint: 'Select vehicle',
                 onTap: _pickVehicle,
               ),
               if (_vehicle != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   _loadingLastOdometer
-                      ? 'جاري تحميل آخر قراءة...'
+                      ? 'Loading last reading...'
                       : (_lastOdometer != null
-                            ? 'آخر قراءة مسجلة: ${_lastOdometer!.toStringAsFixed(0)}'
-                            : 'لا توجد قراءة سابقة (أول تسجيل لهذه السيارة)'),
+                            ? 'Last recorded reading: ${_lastOdometer!.toStringAsFixed(0)}'
+                            : 'No previous reading (first entry for this vehicle)'),
                   style: const TextStyle(
                     color: AppColors.midGray,
                     fontSize: 11.5,
@@ -924,25 +943,25 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 ),
               ],
               const SizedBox(height: 16),
-              _label('قراءة العداد الحالية'),
+              _label('Current Odometer Reading'),
               TextFormField(
                 controller: _odometerController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(hintText: 'كم'),
+                decoration: const InputDecoration(hintText: 'km'),
                 onChanged: (_) => setState(() {}),
               ),
               if (_vehicleSubtype == 'maintenance') ...[
                 const SizedBox(height: 16),
-                _label('نوع الصيانة'),
+                _label('Maintenance Type'),
                 _pickerField(
                   label: _serviceItem?.label,
-                  hint: 'اختر نوع الصيانة',
+                  hint: 'Select maintenance type',
                   onTap: _pickServiceItem,
                 ),
               ],
               const SizedBox(height: 16),
               _label(
-                _vehicleSubtype == 'fuel' ? 'تكلفة الوقود' : 'تكلفة الصيانة',
+                _vehicleSubtype == 'fuel' ? 'Fuel Cost' : 'Maintenance Cost',
               ),
               TextFormField(
                 controller: _amountController,
@@ -953,18 +972,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 16),
-              _label('الخزنة'),
+              _label('Cash Account'),
               _pickerField(
                 label: _treasury?.treasuryName,
-                hint: 'اختر الخزنة اللي دفعت منها',
+                hint: 'Select the account used for payment',
                 onTap: _pickTreasury,
               ),
               const SizedBox(height: 16),
-              _label('ملاحظات '),
+              _label('Notes'),
               TextFormField(
                 controller: _notesController,
                 maxLines: 3,
-                decoration: const InputDecoration(hintText: 'تفاصيل إضافية...'),
+                decoration: const InputDecoration(hintText: 'Additional details...'),
               ),
               if (_error != null) ...[const SizedBox(height: 12), _errorRow()],
             ],
@@ -977,8 +996,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             child: IgnorePointer(
               ignoring: !_canSubmitVehicleLog,
               child: SwipeToConfirmButton(
-                label: 'اسحب لتسجيل المصروف',
-                confirmedLabel: 'تم التسجيل',
+                label: 'Swipe to log expense',
+                confirmedLabel: 'Recorded',
                 onConfirmed: _submitVehicleLogPath,
                 wasQueued: () => _lastSubmitWasQueued,
               ),
@@ -1001,10 +1020,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               if (!hasPresetType) ...[
-                _label('نوع المصروف'),
+                _label('Expense Type'),
                 _pickerField(
                   label: _expenseType?.label,
-                  hint: 'اختر نوع المصروف',
+                  hint: 'Select expense type',
                   onTap: _pickExpenseType,
                   leadingIcon: _expenseType != null
                       ? _iconForExpenseType(_expenseType!.name)
@@ -1012,7 +1031,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 ),
                 const SizedBox(height: 16),
               ],
-              _label('المبلغ'),
+              _label('Amount'),
               TextFormField(
                 controller: _amountController,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -1022,18 +1041,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 16),
-              _label('الخزنة'),
+              _label('Cash Account'),
               _pickerField(
                 label: _treasury?.treasuryName,
-                hint: 'اختر الخزنة اللي دفعت منها',
+                hint: 'Select the account used for payment',
                 onTap: _pickTreasury,
               ),
               const SizedBox(height: 16),
-              _label('ملاحظات '),
+              _label('Notes'),
               TextFormField(
                 controller: _notesController,
                 maxLines: 3,
-                decoration: const InputDecoration(hintText: 'تفاصيل إضافية...'),
+                decoration: const InputDecoration(hintText: 'Additional details...'),
               ),
               if (_error != null) ...[const SizedBox(height: 12), _errorRow()],
             ],
@@ -1046,8 +1065,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             child: IgnorePointer(
               ignoring: !_canSubmitExpenseClaim,
               child: SwipeToConfirmButton(
-                label: 'اسحب لتسجيل المصروف',
-                confirmedLabel: 'تم التسجيل',
+                label: 'Swipe to log expense',
+                confirmedLabel: 'Recorded',
                 onConfirmed: _submitExpenseClaimPath,
                 wasQueued: () => _lastSubmitWasQueued,
               ),
@@ -1088,7 +1107,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   ),
                 ),
               ),
-              const Icon(Icons.chevron_left_rounded, color: AppColors.midGray),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.midGray),
             ],
           ),
         ),

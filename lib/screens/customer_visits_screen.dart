@@ -151,7 +151,7 @@ class _CustomerVisitsScreenState extends State<CustomerVisitsScreen>
       final message = handleErpError(context, e);
       setState(() {
         _loadingVisits = false;
-        _visitsError = message ?? 'تعذر تحميل الزيارات';
+        _visitsError = message ?? 'Could not load visits';
       });
     }
   }
@@ -167,7 +167,7 @@ class _CustomerVisitsScreenState extends State<CustomerVisitsScreen>
         setState(() {
           _loadingOverdue = false;
           _overdueLoaded = true;
-          _overdueError = 'لا توجد مناطق مرتبطة بحسابك';
+          _overdueError = 'No territories are linked to your account';
         });
         return;
       }
@@ -273,7 +273,7 @@ class _CustomerVisitsScreenState extends State<CustomerVisitsScreen>
       setState(() {
         _loadingOverdue = false;
         _overdueLoaded = true;
-        _overdueError = message ?? 'تعذر تحميل العملاء المتأخرين';
+        _overdueError = message ?? 'Could not load overdue customers';
       });
     }
   }
@@ -309,14 +309,14 @@ class _CustomerVisitsScreenState extends State<CustomerVisitsScreen>
     return Scaffold(
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: const Text('زيارات العملاء'),
+        title: const Text('Customer Visits'),
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.black,
           indicatorColor: AppColors.accent,
           tabs: const [
-            Tab(text: 'زياراتي'),
-            Tab(text: 'عملاء متأخرين'),
+            Tab(text: 'My Visits'),
+            Tab(text: 'Overdue Customers'),
           ],
         ),
       ),
@@ -325,7 +325,7 @@ class _CustomerVisitsScreenState extends State<CustomerVisitsScreen>
         backgroundColor: AppColors.white,
         foregroundColor: AppColors.accent,
         icon: const Icon(Icons.add_location_alt_rounded),
-        label: const Text('تسجيل زيارة'),
+        label: const Text('Log Visit'),
       ),
       body: SafeArea(
         child: TabBarView(
@@ -353,7 +353,7 @@ class _CustomerVisitsScreenState extends State<CustomerVisitsScreen>
     if (_visits.isEmpty) {
       return const Center(
         child: Text(
-          'لا توجد زيارات مسجلة بعد',
+          'No visits recorded yet',
           style: TextStyle(color: AppColors.midGray),
         ),
       );
@@ -439,7 +439,7 @@ class _CustomerVisitsScreenState extends State<CustomerVisitsScreen>
     if (_overdue.isEmpty) {
       return const Center(
         child: Text(
-          'كل عملاء خط سيرك متابَعين — مفيش حد متأخر عليه زيارة',
+          'All customers in your territory are up to date. No overdue visits.',
           style: TextStyle(color: AppColors.midGray),
           textAlign: TextAlign.center,
         ),
@@ -479,8 +479,8 @@ class _CustomerVisitsScreenState extends State<CustomerVisitsScreen>
                       const SizedBox(height: 2),
                       Text(
                         days == null
-                            ? 'لم تُسجَّل له زيارة من قبل'
-                            : 'آخر زيارة من $days يوم',
+                            ? 'No previous visit recorded'
+                            : 'Last visit was $days days ago',
                         style: const TextStyle(
                           color: AppColors.accent,
                           fontSize: 12,
@@ -497,7 +497,7 @@ class _CustomerVisitsScreenState extends State<CustomerVisitsScreen>
                     ),
                   ),
                   icon: const Icon(Icons.add_location_alt_rounded, size: 16),
-                  label: const Text('تسجيل زيارة'),
+                  label: const Text('Log Visit'),
                 ),
               ],
             ),
@@ -520,6 +520,11 @@ class _LogVisitSheet extends StatefulWidget {
 }
 
 const _visitTypes = ['زيارة', 'تحصيل', 'تنشيط'];
+const _visitTypeLabels = {
+  'زيارة': 'Visit',
+  'تحصيل': 'Collection',
+  'تنشيط': 'Activation',
+};
 
 class _LogVisitSheetState extends State<_LogVisitSheet> {
   PickedRecord? _customer;
@@ -552,7 +557,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت'),
+          content: Text('Could not determine your territories. Check your internet connection.'),
         ),
       );
       return;
@@ -560,8 +565,8 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
     if (!mounted) return;
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر العميل',
-      hintText: 'ابحث باسم العميل...',
+      title: 'Select Customer',
+      hintText: 'Search customers...',
       search: (query) async {
         final filters = <List<dynamic>>[
           if (query.isNotEmpty) ['customer_name', 'like', '%$query%'],
@@ -656,7 +661,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
     // إثبات الوصل الورقي اللي اتحصّل بيه.
     final receipt = _receiptController.text.trim();
     if (_visitType == 'تحصيل' && receipt.isEmpty) {
-      setState(() => _receiptError = 'رقم الوصل مطلوب لتسجيل تحصيل');
+      setState(() => _receiptError = 'A receipt number is required to log a collection.');
       return false;
     }
     setState(() {
@@ -674,7 +679,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
         if (!mounted) return false;
         setState(() {
           _error =
-              'لا يمكن تسجيل الزيارة بدون الموقع. شغّل GPS وامنح التطبيق صلاحية الموقع.';
+              'A location is required to log a visit. Turn on GPS and grant location permission.';
         });
         await _openRelevantLocationSettings();
         return false;
@@ -700,7 +705,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('لا يوجد اتصال — تم حفظ الزيارة وستُرسل تلقائيًا'),
+            content: Text('Offline. Visit saved and will be sent automatically.'),
           ),
         );
         return true;
@@ -715,7 +720,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
       if (createdName != null) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('تم تسجيل الزيارة بنجاح')));
+        ).showSnackBar(const SnackBar(content: Text('Visit logged successfully')));
       }
       return true;
     } catch (e) {
@@ -732,7 +737,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('تعذر الاتصال — تم حفظ الزيارة وستُرسل تلقائيًا'),
+            content: Text('Connection unavailable. Visit saved and will be sent automatically.'),
           ),
         );
         return true;
@@ -775,7 +780,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'تسجيل زيارة',
+              'Log visit',
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
             ),
             const SizedBox(height: 16),
@@ -796,7 +801,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          _customer?.label ?? 'اختر العميل',
+                          _customer?.label ?? 'Select customer',
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: _customer == null
@@ -807,7 +812,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
                       ),
                       if (widget.presetCustomer == null)
                         const Icon(
-                          Icons.chevron_left_rounded,
+                          Icons.chevron_right_rounded,
                           color: AppColors.midGray,
                         ),
                     ],
@@ -817,7 +822,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'نوع الزيارة',
+              'Visit type',
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
             const SizedBox(height: 8),
@@ -826,7 +831,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
               children: _visitTypes.map((type) {
                 final selected = _visitType == type;
                 return ChoiceChip(
-                  label: Text(type),
+                  label: Text(_visitTypeLabels[type] ?? type),
                   selected: selected,
                   selectedColor: AppColors.accent,
                   labelStyle: TextStyle(
@@ -845,7 +850,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
               TextFormField(
                 controller: _receiptController,
                 decoration: InputDecoration(
-                  hintText: 'رقم الوصل (لو حصّلت بالفعل)',
+                  hintText: 'Receipt number (if already collected)',
                   errorText: _receiptError,
                 ),
                 onChanged: (_) {
@@ -858,7 +863,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
               OutlinedButton.icon(
                 onPressed: _customer == null ? null : _goToCollection,
                 icon: const Icon(Icons.payments_rounded, size: 18),
-                label: const Text('الذهاب لتحصيل جديد من هذا العميل'),
+                label: const Text('Start a new collection for this customer'),
               ),
             ],
             const SizedBox(height: 12),
@@ -866,7 +871,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
               controller: _notesController,
               maxLines: 3,
               decoration: const InputDecoration(
-                hintText: 'ملاحظات (اختياري)...',
+                hintText: 'Notes (optional)...',
               ),
             ),
             if (_error != null) ...[
@@ -882,8 +887,8 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
               child: IgnorePointer(
                 ignoring: _customer == null || _submitting,
                 child: SwipeToConfirmButton(
-                  label: 'اسحب لحفظ الزيارة',
-                  confirmedLabel: 'تم الحفظ',
+                  label: 'Swipe to save visit',
+                  confirmedLabel: 'Saved',
                   onConfirmed: _submit,
                   wasQueued: () => _lastSubmitWasQueued,
                 ),

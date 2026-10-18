@@ -81,7 +81,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _items = list.map((n) {
           return _NotificationItem(
             name: n['name'] as String,
-            subject: stripHtml((n['subject'] as String?) ?? 'إشعار'),
+            subject: stripHtml((n['subject'] as String?) ?? 'Notification'),
             type: n['type'] as String?,
             creation: DateTime.tryParse((n['creation'] as String?) ?? ''),
             read: n['read'] == 1 || n['read'] == true,
@@ -155,10 +155,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   String _relativeTime(DateTime? time) {
     if (time == null) return '';
     final diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 1) return 'الآن';
-    if (diff.inMinutes < 60) return 'منذ ${diff.inMinutes} دقيقة';
-    if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعة';
-    if (diff.inDays < 7) return 'منذ ${diff.inDays} يوم';
+    if (diff.inMinutes < 1) return 'Now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${time.year}-${time.month.toString().padLeft(2, '0')}-${time.day.toString().padLeft(2, '0')}';
   }
 
@@ -167,7 +167,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: const Text('الإشعارات'),
+        title: const Text('Notifications'),
         actions: [
           if (_unreadCount > 0)
             TextButton(
@@ -178,7 +178,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('تحديد الكل كمقروء'),
+                  : const Text('Mark all as read'),
             ),
         ],
       ),
@@ -202,7 +202,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               const SizedBox(height: 8),
               Text(_error!, style: const TextStyle(color: AppColors.accent), textAlign: TextAlign.center),
               const SizedBox(height: 12),
-              TextButton(onPressed: _load, child: const Text('حاول مرة أخرى')),
+              TextButton(onPressed: _load, child: const Text('Try again')),
             ],
           ),
         ),
@@ -211,7 +211,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     if (_items.isEmpty) {
       return const Center(
-        child: Text('لا توجد إشعارات حاليًا', style: TextStyle(color: AppColors.midGray)),
+            child: Text('No notifications yet', style: TextStyle(color: AppColors.midGray)),
       );
     }
 
@@ -226,7 +226,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           final item = _items[i];
           final time = _relativeTime(item.creation);
           return Semantics(
-            label: '${item.subject}.$time${item.read ? '' : '. غير مقروء'}',
+            label: '${item.subject}.$time${item.read ? '' : '. Unread'}',
             button: true,
             child: Material(
               color: AppColors.white,

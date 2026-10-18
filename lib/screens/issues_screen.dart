@@ -74,11 +74,11 @@ class _IssuesScreenState extends State<IssuesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      appBar: AppBar(title: const Text('المذكرات')),
+      appBar: AppBar(title: const Text('Issues')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _createIssue,
         icon: const Icon(Icons.add_comment_rounded),
-        label: const Text('مذكرة جديدة'),
+        label: const Text('New Issue'),
       ),
       body: _loading
           ? const LoadingIndicator()
@@ -90,7 +90,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                   ? ListView(
                       children: const [
                         SizedBox(height: 180),
-                        Center(child: Text('لا توجد مذكرات مسجلة')),
+                        Center(child: Text('No issues have been recorded')),
                       ],
                     )
                   : ListView.separated(
@@ -141,11 +141,11 @@ class _IssuesScreenState extends State<IssuesScreen> {
 }
 
 String _statusLabel(String? status) => switch (status) {
-  'Open' => 'مفتوحة',
-  'Replied' => 'تم الرد',
-  'On Hold' => 'معلقة',
-  'Resolved' => 'تم الحل',
-  'Closed' => 'مغلقة',
+  'Open' => 'Open',
+  'Replied' => 'Replied',
+  'On Hold' => 'On Hold',
+  'Resolved' => 'Resolved',
+  'Closed' => 'Closed',
   _ => status ?? '—',
 };
 
@@ -205,7 +205,7 @@ class _CreateIssueSheetState extends State<_CreateIssueSheet> {
   Future<void> _pickCustomer() async {
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر العميل',
+      title: 'Select Customer',
       search: (query) async {
         final rows = await ErpService.getList(
           'Customer',
@@ -232,7 +232,7 @@ class _CreateIssueSheetState extends State<_CreateIssueSheet> {
 
   Future<void> _submit() async {
     if (_subject.text.trim().isEmpty) {
-      setState(() => _error = 'موضوع المذكرة مطلوب.');
+      setState(() => _error = 'Issue subject is required.');
       return;
     }
     setState(() {
@@ -282,41 +282,41 @@ class _CreateIssueSheetState extends State<_CreateIssueSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'تسجيل مذكرة',
+                'Create Issue',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _subject,
-                decoration: const InputDecoration(labelText: 'موضوع المذكرة *'),
+                decoration: const InputDecoration(labelText: 'Subject *'),
               ),
               const SizedBox(height: 12),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(_customer?.label ?? 'اختر العميل (اختياري)'),
+                title: Text(_customer?.label ?? 'Select customer (optional)'),
                 trailing: const Icon(Icons.search_rounded),
                 onTap: _pickCustomer,
               ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(_priority?.label ?? 'الأولوية'),
+                title: Text(_priority?.label ?? 'Priority'),
                 trailing: const Icon(Icons.expand_more_rounded),
                 onTap: () async {
                   final value = await _pickLink(
                     doctype: 'Issue Priority',
-                    title: 'اختر الأولوية',
+                    title: 'Select Priority',
                   );
                   if (value != null) setState(() => _priority = value);
                 },
               ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(_issueType?.label ?? 'نوع المذكرة'),
+                title: Text(_issueType?.label ?? 'Issue Type'),
                 trailing: const Icon(Icons.expand_more_rounded),
                 onTap: () async {
                   final value = await _pickLink(
                     doctype: 'Issue Type',
-                    title: 'اختر نوع المذكرة',
+                    title: 'Select Issue Type',
                   );
                   if (value != null) setState(() => _issueType = value);
                 },
@@ -325,7 +325,7 @@ class _CreateIssueSheetState extends State<_CreateIssueSheet> {
                 controller: _description,
                 minLines: 4,
                 maxLines: 8,
-                decoration: const InputDecoration(labelText: 'تفاصيل المذكرة'),
+                decoration: const InputDecoration(labelText: 'Details'),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 10),
@@ -341,7 +341,7 @@ class _CreateIssueSheetState extends State<_CreateIssueSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.send_rounded),
-                label: const Text('إرسال المذكرة'),
+                label: const Text('Submit Issue'),
               ),
             ],
           ),

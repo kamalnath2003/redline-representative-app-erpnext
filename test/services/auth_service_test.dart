@@ -147,7 +147,7 @@ void main() {
           isA<AuthException>()
               .having((e) => e.serverRejected, 'serverRejected', true)
               .having((e) => e.accessRestricted, 'accessRestricted', true)
-              .having((e) => e.message, 'message', contains('غير مصرح')),
+              .having((e) => e.message, 'message', contains('not currently authorized')),
         ),
       );
     });
@@ -167,7 +167,7 @@ void main() {
           isA<AuthException>().having(
             (e) => e.message,
             'message',
-            'بيانات الدخول غير صحيحة.',
+            'Incorrect username or password.',
           ),
         ),
       );
@@ -185,7 +185,7 @@ void main() {
         throwsA(
           isA<AuthException>()
               .having((e) => e.serverRejected, 'serverRejected', true)
-              .having((e) => e.message, 'message', contains('كثرة المحاولات')),
+              .having((e) => e.message, 'message', contains('too many attempts')),
         ),
       );
     });

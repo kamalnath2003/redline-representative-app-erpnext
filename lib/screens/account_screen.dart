@@ -59,17 +59,17 @@ class _AccountScreenState extends State<AccountScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
-        title: const Text('تسجيل الخروج'),
-        content: const Text('هل أنت متأكد من رغبتك في تسجيل الخروج؟'),
+        title: const Text('Sign out'),
+        content: const Text('Are you sure you want to sign out?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text(
-              'تسجيل الخروج',
+              'Sign out',
               style: TextStyle(
                 color: AppColors.accent,
                 fontWeight: FontWeight.w700,
@@ -92,7 +92,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      appBar: AppBar(title: const Text('الحساب')),
+      appBar: AppBar(title: const Text('Account')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -128,7 +128,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   const SizedBox(width: 14),
                   const Expanded(
                     child: Text(
-                      'حسابك مسجّل دخول حاليًا',
+                      'You are currently signed in',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -143,7 +143,7 @@ class _AccountScreenState extends State<AccountScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 4),
               child: Text(
-                'الأمان',
+                'Security',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
               ),
             ),
@@ -167,13 +167,13 @@ class _AccountScreenState extends State<AccountScreen> {
                     : _toggleBiometric,
                 activeThumbColor: AppColors.accent,
                 title: const Text(
-                  'قفل الدخول بالبصمة',
+                  'Require biometrics to sign in',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                 ),
                 subtitle: Text(
                   _biometricSupported
-                      ? 'يطلب تأكيد بصمتك عند فتح التطبيق'
-                      : 'الجهاز لا يدعم البصمة أو لم يتم تفعيلها في إعدادات الجهاز',
+                      ? 'Confirm your identity when opening the app'
+                      : 'Biometrics are unavailable or not enabled on this device',
                   style: const TextStyle(
                     color: AppColors.midGray,
                     fontSize: 12,
@@ -194,11 +194,11 @@ class _AccountScreenState extends State<AccountScreen> {
               child: ListTile(
                 leading: const Icon(Icons.privacy_tip_outlined),
                 title: const Text(
-                  'سياسة الخصوصية',
+                  'Privacy policy',
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
-                subtitle: const Text('كيفية استخدام وحماية بياناتك'),
-                trailing: const Icon(Icons.chevron_left_rounded),
+                subtitle: const Text('How your data is used and protected'),
+                trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => context.push('/privacy-policy'),
               ),
             ),
@@ -215,7 +215,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       ),
                     )
                   : const Icon(Icons.logout_rounded),
-              label: const Text('تسجيل الخروج'),
+              label: const Text('Sign out'),
             ),
           ],
         ),

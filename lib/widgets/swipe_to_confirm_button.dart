@@ -24,9 +24,9 @@ class SwipeToConfirmButton extends StatefulWidget {
     super.key,
     required this.label,
     required this.onConfirmed,
-    this.confirmedLabel = 'تم التأكيد',
-    this.failedLabel = 'حدث خطأ، حاول مرة أخرى',
-    this.queuedLabel = 'محفوظ محليًا — سيُرسل عند توفر الاتصال',
+    this.confirmedLabel = 'Confirmed',
+    this.failedLabel = 'Something went wrong. Try again.',
+    this.queuedLabel = 'Saved offline — will send when connected',
     this.wasQueued,
     this.height = 64,
     this.autoResetAfter,
@@ -211,7 +211,7 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
 
         return Semantics(
           label: semanticsLabel,
-          hint: 'مقبض قابل للسحب من اليمين لليسار للتأكيد',
+          hint: 'Drag the handle from left to right to confirm',
           button: true,
           enabled: !_locked,
           child: _buildTrack(handleOffset, textOpacity, maxTravel),

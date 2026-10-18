@@ -87,7 +87,7 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       final auth = LocalAuthentication();
       final confirmed = await auth.authenticate(
-        localizedReason: 'أكّد هويتك للدخول إلى حسابك',
+        localizedReason: 'Confirm your identity to access your account',
         persistAcrossBackgrounding: true,
       );
       if (!confirmed) {
@@ -133,7 +133,7 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
       setState(() {
         _biometricBusy = false;
-        _errorText = 'تعذّر تأكيد البصمة، حاول مرة أخرى أو سجّل الدخول يدويًا.';
+        _errorText = 'Could not verify your biometrics. Try again or sign in manually.';
       });
     }
   }
@@ -186,7 +186,7 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorText = 'حدث خطأ غير متوقع، حاول مرة أخرى لاحقًا.';
+        _errorText = 'An unexpected error occurred. Please try again later.';
       });
     }
   }
@@ -194,7 +194,7 @@ class _AuthScreenState extends State<AuthScreen> {
   void _handleForgotPassword() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('هذه الخاصية غير متاحة حاليًا، تواصل مع الدعم الفني'),
+        content: Text('This feature is currently unavailable. Contact support.'),
       ),
     );
   }
@@ -235,7 +235,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'تسجيل الدخول',
+                    'Sign in',
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
@@ -244,7 +244,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'ادخل بيانات شركتك للمتابعة',
+                    'Enter your company details to continue',
                     style: TextStyle(fontSize: 14, color: AppColors.midGray),
                   ),
                   const SizedBox(height: 28),
@@ -257,7 +257,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 10),
                           child: Text(
-                            'أو سجّل الدخول يدويًا',
+                            'Or sign in manually',
                             style: TextStyle(color: AppColors.midGray, fontSize: 12),
                           ),
                         ),
@@ -276,15 +276,15 @@ class _AuthScreenState extends State<AuthScreen> {
                     autofillHints: const [AutofillHints.url],
                     onFieldSubmitted: (_) => _usernameFocus.requestFocus(),
                     decoration: const InputDecoration(
-                      labelText: 'دومين الشركة',
-                      hintText: 'مثال: company.redtch.com',
+                      labelText: 'Company server',
+                      hintText: 'Example: company.redtch.com',
                       prefixIcon: Icon(
                         Icons.dns_rounded,
                         color: AppColors.midGray,
                       ),
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'برجاء إدخال دومين الشركة'
+                        ? 'Enter your company server'
                         : null,
                   ),
                   const SizedBox(height: 16),
@@ -296,14 +296,14 @@ class _AuthScreenState extends State<AuthScreen> {
                     autofillHints: const [AutofillHints.username],
                     onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
                     decoration: const InputDecoration(
-                      labelText: 'اسم المستخدم',
+                      labelText: 'Username',
                       prefixIcon: Icon(
                         Icons.person_outline_rounded,
                         color: AppColors.midGray,
                       ),
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'برجاء إدخال اسم المستخدم'
+                        ? 'Enter your username'
                         : null,
                   ),
                   const SizedBox(height: 16),
@@ -317,7 +317,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     autofillHints: const [AutofillHints.password],
                     onFieldSubmitted: (_) => _handleLogin(),
                     decoration: InputDecoration(
-                      labelText: 'كلمة المرور',
+                      labelText: 'Password',
                       prefixIcon: const Icon(
                         Icons.lock_outline_rounded,
                         color: AppColors.midGray,
@@ -330,15 +330,15 @@ class _AuthScreenState extends State<AuthScreen> {
                           color: AppColors.midGray,
                         ),
                         tooltip: _obscurePassword
-                            ? 'إظهار كلمة المرور'
-                            : 'إخفاء كلمة المرور',
+                            ? 'Show password'
+                            : 'Hide password',
                         onPressed: () => setState(
                           () => _obscurePassword = !_obscurePassword,
                         ),
                       ),
                     ),
                     validator: (v) => (v == null || v.isEmpty)
-                        ? 'برجاء إدخال كلمة المرور'
+                        ? 'Enter your password'
                         : null,
                   ),
                   if (_errorText != null) ...[
@@ -379,13 +379,13 @@ class _AuthScreenState extends State<AuthScreen> {
                               color: AppColors.white,
                             ),
                           )
-                        : const Text('تسجيل الدخول'),
+                        : const Text('Sign in'),
                   ),
                   const SizedBox(height: 16),
                   Center(
                     child: TextButton(
                       onPressed: _handleForgotPassword,
-                      child: const Text('هل نسيت كلمة المرور؟'),
+                      child: const Text('Forgot password?'),
                     ),
                   ),
                 ],
@@ -431,18 +431,18 @@ class _AuthScreenState extends State<AuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'الدخول بالبصمة',
+                      'Sign in with biometrics',
                       style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
                     ),
                     SizedBox(height: 2),
                     Text(
-                      'استخدم بصمتك للدخول بسرعة',
+                      'Use your fingerprint for quick access',
                       style: TextStyle(color: AppColors.midGray, fontSize: 12),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_left_rounded, color: AppColors.midGray),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.midGray),
             ],
           ),
         ),

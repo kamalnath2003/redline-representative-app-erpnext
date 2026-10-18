@@ -18,7 +18,7 @@ class RowSyncIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: fromCache ? 'بيانات محفوظة — غير محدّثة الآن' : 'محدّثة الآن من السيرفر',
+      message: fromCache ? 'Saved offline — not current' : 'Up to date with server',
       child: Icon(
         fromCache ? Icons.cloud_queue_rounded : Icons.cloud_done_rounded,
         size: 15,

@@ -5,10 +5,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 const _docTypeTitles = {
-  'Sales Invoice': 'فاتورة مبيعات',
-  'Sales Order': 'أمر بيع',
-  'Customer': 'بيانات عميل',
-  'Payment Entry': 'إيصال استلام',
+  'Sales Invoice': 'Sales Invoice',
+  'Sales Order': 'Sales Order',
+  'Customer': 'Customer',
+  'Payment Entry': 'Payment Receipt',
 };
 
 /// Builds the shareable PDF **on the device itself**, from the same
@@ -76,7 +76,7 @@ class PdfBuilderService {
     pdfDoc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        textDirection: pw.TextDirection.rtl,
+        textDirection: pw.TextDirection.ltr,
         margin: const pw.EdgeInsets.all(28),
         header: (context) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -112,7 +112,7 @@ class PdfBuilderService {
           children: [
             pw.Divider(thickness: 0.5),
             pw.Text(
-              'صفحة ${context.pageNumber} من ${context.pagesCount}',
+              'Page ${context.pageNumber} of ${context.pagesCount}',
               style: pw.TextStyle(
                 font: regularFont,
                 fontSize: 9,
@@ -127,9 +127,9 @@ class PdfBuilderService {
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               if (date != null)
-                _labelValue(regularFont, boldFont, 'التاريخ', date),
+                _labelValue(regularFont, boldFont, 'Date', date),
               if (partyName != null)
-                _labelValue(regularFont, boldFont, 'العميل', partyName),
+                _labelValue(regularFont, boldFont, 'Customer', partyName),
             ],
           ),
           pw.SizedBox(height: 18),
@@ -142,7 +142,7 @@ class PdfBuilderService {
           if ((doc['terms'] as String?)?.trim().isNotEmpty ?? false) ...[
             pw.SizedBox(height: 18),
             pw.Text(
-              'الشروط والأحكام',
+              'Terms and Conditions',
               style: pw.TextStyle(font: boldFont, fontSize: 11),
             ),
             pw.SizedBox(height: 4),
@@ -189,13 +189,13 @@ class PdfBuilderService {
     pdfDoc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        textDirection: pw.TextDirection.rtl,
+        textDirection: pw.TextDirection.ltr,
         margin: const pw.EdgeInsets.all(28),
         header: (context) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
             pw.Text(
-              'كشف حساب — $customerLabel',
+              'Account Statement — $customerLabel',
               style: pw.TextStyle(font: boldFont, fontSize: 16),
             ),
             pw.SizedBox(height: 6),
@@ -206,7 +206,7 @@ class PdfBuilderService {
           children: [
             pw.Divider(thickness: 0.5),
             pw.Text(
-              'صفحة ${context.pageNumber} من ${context.pagesCount}',
+              'Page ${context.pageNumber} of ${context.pagesCount}',
               style: pw.TextStyle(
                 font: regularFont,
                 fontSize: 9,
@@ -226,11 +226,11 @@ class PdfBuilderService {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  'المديونية الحالية',
+                  'Current Balance',
                   style: pw.TextStyle(font: regularFont, fontSize: 10),
                 ),
                 pw.Text(
-                  '${_fmt(currentBalance)} ج.م',
+                  '${_fmt(currentBalance)} EGP',
                   style: pw.TextStyle(font: boldFont, fontSize: 13),
                 ),
               ],
@@ -250,11 +250,11 @@ class PdfBuilderService {
               pw.TableRow(
                 decoration: const pw.BoxDecoration(color: PdfColors.grey800),
                 children: [
-                  _cell('الرصيد', headerStyle, pad: 6),
-                  _cell('دائن', headerStyle, pad: 6),
-                  _cell('مدين', headerStyle, pad: 6),
-                  _cell('المستند', headerStyle, pad: 6),
-                  _cell('التاريخ', headerStyle, pad: 6),
+                  _cell('Balance', headerStyle, pad: 6),
+                  _cell('Credit', headerStyle, pad: 6),
+                  _cell('Debit', headerStyle, pad: 6),
+                  _cell('Document', headerStyle, pad: 6),
+                  _cell('Date', headerStyle, pad: 6),
                 ],
               ),
               ...rows.map((row) {
@@ -307,13 +307,13 @@ class PdfBuilderService {
     pdfDoc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
-        textDirection: pw.TextDirection.rtl,
+        textDirection: pw.TextDirection.ltr,
         margin: const pw.EdgeInsets.all(24),
         header: (_) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
             pw.Text(
-              'كشف حركة المخزن — $warehouseLabel',
+              'Warehouse Movement — $warehouseLabel',
               style: pw.TextStyle(font: boldFont, fontSize: 16),
             ),
             pw.SizedBox(height: 6),
@@ -321,7 +321,7 @@ class PdfBuilderService {
           ],
         ),
         footer: (context) => pw.Text(
-          'صفحة ${context.pageNumber} من ${context.pagesCount}',
+          'Page ${context.pageNumber} of ${context.pagesCount}',
           textAlign: pw.TextAlign.center,
           style: pw.TextStyle(font: regularFont, fontSize: 8),
         ),
@@ -333,13 +333,13 @@ class PdfBuilderService {
                 decoration: const pw.BoxDecoration(color: PdfColors.grey800),
                 children: [
                   for (final label in const [
-                    'الرصيد',
-                    'الحركة',
-                    'دفعة / سيريال',
-                    'المستند',
-                    'المخزن',
-                    'الصنف',
-                    'التاريخ',
+                    'Balance',
+                    'Movement',
+                    'Batch / Serial',
+                    'Document',
+                    'Warehouse',
+                    'Item',
+                    'Date',
                   ])
                     _cell(label, headerStyle, pad: 5),
                 ],
@@ -422,10 +422,10 @@ class PdfBuilderService {
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: PdfColors.grey800),
           children: [
-            _cell('الإجمالي', headerStyle, pad: 6),
-            _cell('السعر', headerStyle, pad: 6),
-            _cell('الكمية', headerStyle, pad: 6),
-            _cell('الصنف', headerStyle, pad: 6),
+            _cell('Total', headerStyle, pad: 6),
+            _cell('Price', headerStyle, pad: 6),
+            _cell('Quantity', headerStyle, pad: 6),
+            _cell('Item', headerStyle, pad: 6),
           ],
         ),
         ...rows.map((item) {
@@ -433,9 +433,9 @@ class PdfBuilderService {
               .toString();
           final tracking = <String>[
             if ((item['batch_no']?.toString().trim().isNotEmpty ?? false))
-              'دفعة: ${item['batch_no']}',
+              'Batch: ${item['batch_no']}',
             if ((item['serial_no']?.toString().trim().isNotEmpty ?? false))
-              'سيريال: ${item['serial_no'].toString().replaceAll('\n', '، ')}',
+              'Serial: ${item['serial_no'].toString().replaceAll('\n', ', ')}',
           ];
           final itemName = tracking.isEmpty
               ? baseName
@@ -503,18 +503,18 @@ class PdfBuilderService {
       );
     }
 
-    addRow('الصافي', netTotal);
+    addRow('Net', netTotal);
     if (discountAmount is num && discountAmount > 0) {
       addRow(
         (discountPercent is num && discountPercent > 0)
-            ? 'الخصم ($discountPercent%)'
-            : 'الخصم',
+            ? 'Discount ($discountPercent%)'
+            : 'Discount',
         discountAmount,
       );
     }
-    addRow('الإجمالي النهائي', grandTotal, bold: true);
-    if (paidAmount != null) addRow('المدفوع', paidAmount);
-    if (outstanding is num && outstanding > 0) addRow('المتبقي', outstanding);
+    addRow('Grand Total', grandTotal, bold: true);
+    if (paidAmount != null) addRow('Paid', paidAmount);
+    if (outstanding is num && outstanding > 0) addRow('Outstanding', outstanding);
 
     return pw.Container(
       width: 220,

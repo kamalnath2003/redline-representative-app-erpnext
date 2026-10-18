@@ -117,7 +117,7 @@ class _AllSalesOrdersScreenState extends State<AllSalesOrdersScreen> {
       // A cache hit already painted the list above — a failed live refresh
       // on top of that just leaves the cached copy showing, not an error.
       if (_orders.isNotEmpty) return;
-      setState(() => _error = 'تعذر جلب الطلبيات: $e');
+      setState(() => _error = 'Could not load orders: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -158,7 +158,7 @@ class _AllSalesOrdersScreenState extends State<AllSalesOrdersScreen> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'ابحث باسم العميل أو رقم الطلبية...',
+                hintText: 'Search by customer name or order number...',
                 prefixIcon: const Icon(Icons.search_rounded, size: 20),
                 filled: true,
                 fillColor: AppColors.white,
@@ -176,7 +176,7 @@ class _AllSalesOrdersScreenState extends State<AllSalesOrdersScreen> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    _filterChip(label: 'الكل', selected: _stateFilter == null, onTap: () => setState(() => _stateFilter = null)),
+                    _filterChip(label: 'All', selected: _stateFilter == null, onTap: () => setState(() => _stateFilter = null)),
                     for (final state in _workflowStates) ...[
                       const SizedBox(width: 6),
                       _filterChip(
@@ -211,7 +211,7 @@ class _AllSalesOrdersScreenState extends State<AllSalesOrdersScreen> {
                 padding: EdgeInsets.all(40),
                 child: Center(
                   child: Text(
-                    'لا توجد طلبيات مطابقة',
+                    'No matching orders',
                     style: TextStyle(color: AppColors.midGray),
                   ),
                 ),

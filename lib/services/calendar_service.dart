@@ -48,7 +48,7 @@ class CalendarService {
       // an account calendar is created. Create an app-owned local calendar
       // once so reminders still work without requiring a Google account.
       final created = await _plugin.createCalendar(
-        'Red ERP - الاستحقاقات',
+        'Red ERP - Due dates',
         localAccountName: 'Red ERP',
       );
       if (created.data != null && created.data!.isNotEmpty) {
@@ -59,7 +59,7 @@ class CalendarService {
           .whereType<String>()
           .join('\n');
       if (lastError?.isEmpty ?? true) {
-        lastError = 'لا يوجد تقويم قابل للكتابة وتعذر إنشاء تقويم محلي.';
+        lastError = 'No writable calendar was found, and a local calendar could not be created.';
       }
       return null;
     }
@@ -86,7 +86,7 @@ class CalendarService {
       _ensureTimezone();
       final calendarId = await _resolveWritableCalendarId();
       if (calendarId == null) {
-        lastError ??= 'تعذر إنشاء تقويم Red ERP. تأكد من منح صلاحية التقويم.';
+        lastError ??= 'Could not create the Red ERP calendar. Make sure calendar permission is granted.';
         return false;
       }
 
@@ -101,10 +101,10 @@ class CalendarService {
 
       final event = Event(
         calendarId,
-        title: 'استحقاق دفعة — $customerName',
+        title: 'Payment due — $customerName',
         description:
-            'مستند: $documentName\n'
-            'المبلغ المستحق: ${amount.toStringAsFixed(2)} ج.م',
+            'Document: $documentName\n'
+            'Amount due: ${amount.toStringAsFixed(2)} EGP',
         start: start,
         end: end,
         reminders: [
@@ -120,7 +120,7 @@ class CalendarService {
           .whereType<String>()
           .join('\n');
       if (lastError?.isEmpty ?? true) {
-        lastError = 'رفض تطبيق التقويم إضافة الحدث.';
+        lastError = 'The calendar app could not add the event.';
       }
       return false;
     } catch (e) {

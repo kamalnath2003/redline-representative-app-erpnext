@@ -17,5 +17,5 @@ String? handleErpError(BuildContext context, Object error) {
     }
     return error.message;
   }
-  return 'حدث خطأ غير متوقع، حاول مرة أخرى لاحقًا.';
+  return 'An unexpected error occurred. Please try again later.';
 }

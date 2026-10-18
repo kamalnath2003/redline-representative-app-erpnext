@@ -112,7 +112,7 @@ class _TreasuryStatementScreenState extends State<TreasuryStatementScreen> {
       setState(() => _rows = rows.reversed.toList());
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'تعذر جلب كشف الحساب: $e');
+      setState(() => _error = 'Could not load the account statement: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -123,7 +123,7 @@ class _TreasuryStatementScreenState extends State<TreasuryStatementScreen> {
     final currentBalance = _rows.isNotEmpty ? _rows.first.runningBalance : 0;
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      appBar: AppBar(title: Text('كشف حساب — ${widget.treasuryName}')),
+      appBar: AppBar(title: Text('Account Statement — ${widget.treasuryName}')),
       body: SafeArea(
         child: _loading
             ? const LoadingIndicator()
@@ -140,7 +140,7 @@ class _TreasuryStatementScreenState extends State<TreasuryStatementScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
-                      TextButton(onPressed: _load, child: const Text('حاول مرة أخرى')),
+                      TextButton(onPressed: _load, child: const Text('Try again')),
                     ],
                   ),
                 ),
@@ -161,7 +161,7 @@ class _TreasuryStatementScreenState extends State<TreasuryStatementScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'الرصيد الحالي',
+                            'Current Balance',
                             style: TextStyle(color: AppColors.white, fontSize: 12.5),
                           ),
                           const SizedBox(height: 6),
@@ -186,7 +186,7 @@ class _TreasuryStatementScreenState extends State<TreasuryStatementScreen> {
                         ),
                         child: const Center(
                           child: Text(
-                            'لا توجد حركات مسجّلة على هذه الخزنة حتى الآن',
+                            'No transactions have been recorded for this cash account yet',
                             style: TextStyle(color: AppColors.midGray),
                           ),
                         ),
@@ -281,7 +281,7 @@ class _TreasuryStatementScreenState extends State<TreasuryStatementScreen> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          'الرصيد: ${row.runningBalance.toStringAsFixed(2)}',
+                                          'Balance: ${row.runningBalance.toStringAsFixed(2)} EGP',
                                           style: const TextStyle(
                                             color: AppColors.midGray,
                                             fontSize: 10.5,

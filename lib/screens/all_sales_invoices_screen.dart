@@ -110,7 +110,7 @@ class _AllSalesInvoicesScreenState extends State<AllSalesInvoicesScreen> {
     } catch (e) {
       if (!mounted) return;
       if (_invoices.isNotEmpty) return;
-      setState(() => _error = 'تعذر جلب الفواتير: $e');
+      setState(() => _error = 'Could not load invoices: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -151,7 +151,7 @@ class _AllSalesInvoicesScreenState extends State<AllSalesInvoicesScreen> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'ابحث باسم العميل أو رقم الفاتورة...',
+                hintText: 'Search by customer name or invoice number...',
                 prefixIcon: const Icon(Icons.search_rounded, size: 20),
                 filled: true,
                 fillColor: AppColors.white,
@@ -170,7 +170,7 @@ class _AllSalesInvoicesScreenState extends State<AllSalesInvoicesScreen> {
                   scrollDirection: Axis.horizontal,
                   children: [
                     _filterChip(
-                      label: 'الكل',
+                      label: 'All',
                       selected: _stateFilter == null,
                       onTap: () => setState(() => _stateFilter = null),
                     ),
@@ -208,7 +208,7 @@ class _AllSalesInvoicesScreenState extends State<AllSalesInvoicesScreen> {
                 padding: EdgeInsets.all(40),
                 child: Center(
                   child: Text(
-                    'لا توجد فواتير مطابقة',
+                    'No matching invoices',
                     style: TextStyle(color: AppColors.midGray),
                   ),
                 ),

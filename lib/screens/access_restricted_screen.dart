@@ -63,7 +63,7 @@ class _AccessRestrictedScreenState extends State<AccessRestrictedScreen> {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'الدخول غير متاح',
+                    'Access unavailable',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -74,8 +74,8 @@ class _AccessRestrictedScreenState extends State<AccessRestrictedScreen> {
                   const SizedBox(height: 12),
                   Text(
                     widget.message ??
-                        'حسابك غير مصرح له باستخدام تطبيق الموبايل حاليًا.\n'
-                            'تواصل مع الإدارة لتفعيل الدخول.',
+                        'Your account is not currently authorized to use the mobile app.\n'
+                          'Contact your administrator to enable access.',
                     style: const TextStyle(
                       fontSize: 14,
                       color: AppColors.midGray,
@@ -98,7 +98,7 @@ class _AccessRestrictedScreenState extends State<AccessRestrictedScreen> {
                               ),
                             )
                           : const Icon(Icons.logout_rounded, size: 18),
-                      label: const Text('تسجيل خروج'),
+                      label: const Text('Sign out'),
                     ),
                   ),
                 ],

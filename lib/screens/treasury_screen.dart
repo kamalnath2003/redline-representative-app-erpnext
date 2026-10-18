@@ -92,8 +92,8 @@ Future<TreasuryInfo?> pickTreasury(BuildContext context) async {
   final byName = {for (final t in treasuries) t.name: t};
   final result = await showSearchPicker(
     context: context,
-    title: 'اختر الخزنة',
-    hintText: 'ابحث باسم الخزنة...',
+    title: 'Select Cash Account',
+    hintText: 'Search cash accounts...',
     search: (query) async => treasuries
         .where((t) => query.isEmpty || t.treasuryName.contains(query))
         .map(
@@ -164,7 +164,7 @@ class _TreasuryScreenState extends State<TreasuryScreen> {
       if (mounted) setState(() => _balances = balances);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'تعذر جلب الخزائن: $e');
+      setState(() => _error = 'Could not load cash accounts: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -174,7 +174,7 @@ class _TreasuryScreenState extends State<TreasuryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      appBar: AppBar(title: const Text('الخزنة')),
+      appBar: AppBar(title: const Text('Cash Account')),
       body: SafeArea(child: _buildBody()),
     );
   }
@@ -195,7 +195,7 @@ class _TreasuryScreenState extends State<TreasuryScreen> {
               const SizedBox(height: 8),
               Text(_error!, style: const TextStyle(color: AppColors.accent), textAlign: TextAlign.center),
               const SizedBox(height: 12),
-              TextButton(onPressed: _load, child: const Text('حاول مرة أخرى')),
+              TextButton(onPressed: _load, child: const Text('Try again')),
             ],
           ),
         ),
@@ -207,7 +207,7 @@ class _TreasuryScreenState extends State<TreasuryScreen> {
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text(
-            'لا توجد خزائن مرتبطة بحسابك حاليًا',
+            'No cash accounts are currently linked to your account',
             style: TextStyle(color: AppColors.midGray),
             textAlign: TextAlign.center,
           ),
@@ -325,7 +325,7 @@ class _TreasuryCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              active ? 'نشطة' : 'غير نشطة',
+              active ? 'Active' : 'Inactive',
               style: TextStyle(
                 color: active ? AppColors.success : AppColors.midGray,
                 fontWeight: FontWeight.w700,

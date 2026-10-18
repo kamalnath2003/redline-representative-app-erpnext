@@ -128,7 +128,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت'),
+          content: Text('Could not determine your territories. Check your internet connection.'),
         ),
       );
       return;
@@ -138,8 +138,8 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
 
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر العميل',
-      hintText: 'ابحث باسم العميل...',
+      title: 'Select Customer',
+      hintText: 'Search customers...',
       search: (query) async {
         // See SalesOrderScreen._pickCustomer for why `territories` IS
         // auto-applied here as the load-bearing filter.
@@ -216,12 +216,12 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
               IconButton(
                 icon: const Icon(Icons.tune_rounded),
                 tooltip: territoryFilter == null
-                    ? 'فلترة بخط السير'
-                    : 'خط السير: $territoryFilter',
+                    ? 'Filter by Territory'
+                    : 'Territory: $territoryFilter',
                 onPressed: () async {
                   final picked = await showSearchPicker(
                     context: pickerContext,
-                    title: 'اختر خط السير',
+                    title: 'Select Territory',
                     search: (q) async => territories
                         .where(
                           (t) =>
@@ -371,7 +371,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
           // مش هيوقف تسجيل التحصيل (المندوب لسه يقدر يدخل مبلغ ويحصّله)،
           // بس لازم يبان — سكوت هنا هو بالظبط اللي خلى عطل حقيقي (نقص
           // party_account) يتفسّر غلط كـ"مفيش فواتير مستحقة" لفترة طويلة.
-          outstandingError = 'تعذر تحميل الفواتير المستحقة: $e';
+          outstandingError = 'Could not load outstanding invoices: $e';
         }
       }
 
@@ -505,7 +505,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
         setState(resetForm);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('لا يوجد اتصال — تم حفظ التحصيل وسيُرسل تلقائيًا'),
+            content: Text('Offline. Collection saved and will be sent automatically.'),
           ),
         );
         if (submittedCustomer != null) {
@@ -530,7 +530,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
       final createdName = created['name'] as String?;
       if (createdName == null) {
         throw const ErpException(
-          'تم إنشاء التحصيل لكن لم يرجع السيرفر رقم السند.',
+          'The collection was created, but the server did not return a receipt number.',
           serverRejected: true,
         );
       }
@@ -542,7 +542,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'تم حفظ سند $createdName كمسودة، لكن تعذر ترحيله. ${message ?? ''}',
+              'Receipt $createdName was saved as a draft but could not be submitted. ${message ?? ''}',
             ),
           ),
         );
@@ -590,7 +590,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('تعذر الاتصال — تم حفظ التحصيل وسيُرسل تلقائيًا'),
+            content: Text('Connection unavailable. Collection saved and will be sent automatically.'),
           ),
         );
         if (submittedCustomer != null) {
@@ -628,7 +628,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      appBar: AppBar(title: const Text('تحصيل من عميل')),
+      appBar: AppBar(title: const Text('Collect Payment')),
       body: SafeArea(
         child: Column(
           children: [
@@ -653,7 +653,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                _customer?.label ?? 'اختر العميل',
+                                _customer?.label ?? 'Select customer',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -668,7 +668,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                                 ),
                               ),
                             const Icon(
-                              Icons.chevron_left_rounded,
+                              Icons.chevron_right_rounded,
                               color: AppColors.midGray,
                             ),
                           ],
@@ -679,7 +679,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                   if (_draftDoc != null) ...[
                     const SizedBox(height: 24),
                     const Text(
-                      'المبلغ المحصّل',
+                      'Amount Collected',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -696,7 +696,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                     ),
                     const SizedBox(height: 24),
                     const Text(
-                      'رقم الإيصال الورقي *',
+                      'Paper Receipt Number *',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -706,13 +706,13 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                     TextFormField(
                       controller: _receiptNumberController,
                       decoration: const InputDecoration(
-                        hintText: 'رقم الإيصال في الدفتر الورقي',
+                        hintText: 'Receipt number from the paper log',
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
                     const SizedBox(height: 24),
                     const Text(
-                      'الخزنة ',
+                      'Cash Account',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -742,14 +742,14 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                               Expanded(
                                 child: Text(
                                   _treasury?.treasuryName ??
-                                      'حدد أي خزنة استلمت المبلغ',
+                                      'Select the cash account that received the payment',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                               const Icon(
-                                Icons.chevron_left_rounded,
+                                Icons.chevron_right_rounded,
                                 color: AppColors.midGray,
                               ),
                             ],
@@ -762,7 +762,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'الفواتير المستحقة',
+                          'Outstanding Invoices',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
@@ -771,7 +771,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                         if (_outstanding.isNotEmpty)
                           TextButton(
                             onPressed: _selectAll,
-                            child: const Text('تحديد الكل'),
+                            child: const Text('Select All'),
                           ),
                       ],
                     ),
@@ -812,7 +812,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                         ),
                         child: const Center(
                           child: Text(
-                            'لا توجد فواتير مستحقة على هذا العميل',
+                            'This customer has no outstanding invoices',
                             style: TextStyle(color: AppColors.midGray),
                           ),
                         ),
@@ -871,7 +871,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: const Text(
-                                      'متأخرة',
+                                      'Overdue',
                                       style: TextStyle(
                                         color: AppColors.white,
                                         fontSize: 10.5,
@@ -882,9 +882,9 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                               ],
                             ),
                             subtitle: Text(
-                              'المستحق: ${invoice.outstandingAmount}'
-                              '${invoice.dueDate != null ? ' — الاستحقاق: ${invoice.dueDate}' : ''}'
-                              '${allocated != null ? '\nسيُحصّل منها: ${allocated.toStringAsFixed(2)}' : ''}',
+                              'Outstanding: ${invoice.outstandingAmount}'
+                              '${invoice.dueDate != null ? ' — Due: ${invoice.dueDate}' : ''}'
+                              '${allocated != null ? '\nAllocated: ${allocated.toStringAsFixed(2)}' : ''}',
                               style: const TextStyle(
                                 color: AppColors.midGray,
                                 fontSize: 11.5,
@@ -899,8 +899,8 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: Text(
                           unallocated > 0.01
-                              ? 'تم توزيع ${totalAllocated.toStringAsFixed(2)} من ${_enteredAmount.toStringAsFixed(2)} — الباقي (${unallocated.toStringAsFixed(2)}) بدون فاتورة محددة'
-                              : 'تم توزيع المبلغ بالكامل على الفواتير المحددة',
+                              ? '${totalAllocated.toStringAsFixed(2)} of ${_enteredAmount.toStringAsFixed(2)} allocated — ${unallocated.toStringAsFixed(2)} remains unassigned'
+                              : 'The full amount has been allocated to the selected invoices',
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 12.5,
@@ -941,8 +941,8 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                 child: IgnorePointer(
                   ignoring: !_canSubmit,
                   child: SwipeToConfirmButton(
-                    label: 'اسحب لتأكيد التحصيل',
-                    confirmedLabel: 'تم التحصيل',
+                    label: 'Swipe to confirm collection',
+                    confirmedLabel: 'Collected',
                     onConfirmed: _submit,
                     wasQueued: () => _lastSubmitWasQueued,
                   ),

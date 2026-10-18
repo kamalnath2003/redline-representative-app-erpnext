@@ -66,7 +66,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              _name.isEmpty ? 'مرحبًا' : 'مرحبًا، $_name',
+              _name.isEmpty ? 'Welcome' : 'Welcome, $_name',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.white,

@@ -10,22 +10,22 @@ import '../widgets/loading_indicator.dart';
 import 'document_detail_screen.dart';
 
 const _jobTypeLabels = <String, String>{
-  'salesOrderCreate': 'طلبية مبيعات',
-  'customerVisitCreate': 'زيارة عميل',
-  'materialRequestCreate': 'طلب مواد',
-  'materialRequestReceiptCreate': 'استلام نقل مواد',
-  'expenseClaimPersonalCreate': 'مصروف شخصي',
-  'expenseClaimVehicleLogChain': 'سجل مركبة + مصروف',
-  'customerRegistrationCreate': 'تسجيل عميل',
-  'photoAttach': 'رفع صورة',
+  'salesOrderCreate': 'Sales Order',
+  'customerVisitCreate': 'Customer Visit',
+  'materialRequestCreate': 'Material Request',
+  'materialRequestReceiptCreate': 'Material Receipt',
+  'expenseClaimPersonalCreate': 'Personal Expense',
+  'expenseClaimVehicleLogChain': 'Vehicle Log and Expense',
+  'customerRegistrationCreate': 'Customer Registration',
+  'photoAttach': 'Photo Upload',
 };
 
 const _statusLabels = <String, String>{
-  'pending': 'بانتظار الاتصال',
-  'inProgress': 'جاري الإرسال...',
-  'success': 'تم الإرسال',
-  'failed': 'فشل',
-  'needsReview': 'يحتاج مراجعة',
+  'pending': 'Waiting for connection',
+  'inProgress': 'Sending...',
+  'success': 'Sent',
+  'failed': 'Failed',
+  'needsReview': 'Needs review',
 };
 
 /// "قائمة الانتظار" — كل عملية اتحفظت أوفلاين وهتترسل أول ما النت يرجع.
@@ -70,19 +70,19 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
-        title: const Text('حذف العملية'),
+        title: const Text('Delete operation'),
         content: const Text(
-          'هذه العملية لسه ماترسلتش للسيرفر — لو حذفتها هتتفقد نهائيًا. متأكد؟',
+          'This operation has not been sent to the server. Deleting it is permanent. Continue?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text(
-              'حذف',
+              'Delete',
               style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700),
             ),
           ),
@@ -145,10 +145,10 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
 
   String _relativeTime(DateTime time) {
     final diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 1) return 'الآن';
-    if (diff.inMinutes < 60) return 'منذ ${diff.inMinutes} دقيقة';
-    if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعة';
-    return 'منذ ${diff.inDays} يوم';
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 
   @override
@@ -156,7 +156,7 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: const Text('قائمة الانتظار'),
+        title: const Text('Sync Queue'),
         actions: [
           IconButton(
             onPressed: _syncingNow ? null : _syncNow,
@@ -167,7 +167,7 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.sync_rounded),
-            tooltip: 'مزامنة الآن',
+            tooltip: 'Sync now',
           ),
         ],
       ),
@@ -182,7 +182,7 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
             if (jobs.isEmpty) {
               return const Center(
                 child: Text(
-                  'لا توجد عمليات معلّقة — كل حاجة اترسلت',
+                  'No pending operations. Everything is synced.',
                   style: TextStyle(color: AppColors.midGray),
                 ),
               );
@@ -202,7 +202,7 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () => _retryAllFailed(jobs),
                         icon: const Icon(Icons.refresh_rounded, size: 18),
-                        label: const Text('إعادة محاولة كل الفاشل'),
+                        label: const Text('Retry all failed'),
                       ),
                     ),
                   ),
@@ -291,14 +291,14 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
                                       if (canRetry)
                                         TextButton(
                                           onPressed: () => _retry(job),
-                                          child: const Text('إعادة المحاولة'),
+                                          child: const Text('Retry'),
                                         ),
                                       const Spacer(),
                                       if (job.status != SyncJobStatus.success.name)
                                         TextButton(
                                           onPressed: () => _discard(job),
                                           child: const Text(
-                                            'حذف',
+                                            'Delete',
                                             style: TextStyle(color: AppColors.midGray),
                                           ),
                                         ),

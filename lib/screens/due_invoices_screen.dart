@@ -195,7 +195,7 @@ class _DueInvoicesScreenState extends State<DueInvoicesScreen> {
       final message = handleErpError(context, e);
       setState(() {
         _loading = false;
-        _error = message ?? 'تعذر تحميل فواتير المستحقات';
+        _error = message ?? 'Could not load outstanding invoices';
       });
     }
   }
@@ -204,7 +204,7 @@ class _DueInvoicesScreenState extends State<DueInvoicesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      appBar: AppBar(title: const Text('فواتير المستحقات')),
+      appBar: AppBar(title: const Text('Outstanding Invoices')),
       body: SafeArea(child: _buildBody()),
     );
   }
@@ -226,7 +226,7 @@ class _DueInvoicesScreenState extends State<DueInvoicesScreen> {
     if (_invoices.isEmpty) {
       return const Center(
         child: Text(
-          'لا توجد فواتير عليها مستحقات حاليًا',
+            'There are no outstanding invoices',
           style: TextStyle(color: AppColors.midGray),
         ),
       );
@@ -236,13 +236,13 @@ class _DueInvoicesScreenState extends State<DueInvoicesScreen> {
     // فواتيره) بدون تعقيد شبكة شهرية.
     final byDate = <String, List<_DueInvoice>>{};
     for (final invoice in _invoices) {
-      final key = invoice.dueDate ?? 'بدون تاريخ استحقاق';
+      final key = invoice.dueDate ?? 'No due date';
       byDate.putIfAbsent(key, () => []).add(invoice);
     }
     final dateKeys = byDate.keys.toList()
       ..sort((a, b) {
-        if (a == 'بدون تاريخ استحقاق') return 1;
-        if (b == 'بدون تاريخ استحقاق') return -1;
+        if (a == 'No due date') return 1;
+        if (b == 'No due date') return -1;
         return a.compareTo(b);
       });
 
@@ -268,11 +268,11 @@ class _DueInvoicesScreenState extends State<DueInvoicesScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'إجمالي المستحقات',
+                  'Total Outstanding',
                   style: TextStyle(color: AppColors.midGray, fontSize: 12.5),
                 ),
                 Text(
-                  '${totalOutstanding.toStringAsFixed(0)} ج.م',
+                  '${totalOutstanding.toStringAsFixed(0)} EGP',
                   style: const TextStyle(
                     color: AppColors.white,
                     fontSize: 18,
@@ -307,7 +307,7 @@ class _DueInvoicesScreenState extends State<DueInvoicesScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
-                        'متأخرة',
+                        'Overdue',
                         style: TextStyle(
                           color: AppColors.white,
                           fontSize: 10.5,
@@ -358,7 +358,7 @@ class _DueInvoicesScreenState extends State<DueInvoicesScreen> {
                           ),
                         ),
                         Text(
-                          '${invoice.outstandingAmount.toStringAsFixed(0)} ج.م',
+                          '${invoice.outstandingAmount.toStringAsFixed(0)} EGP',
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 13.5,

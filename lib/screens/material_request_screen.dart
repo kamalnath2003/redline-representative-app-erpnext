@@ -83,7 +83,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       if (salesPerson == null) {
         setState(() {
           _loadingPending = false;
-          _pendingError = 'لا يوجد سجل مندوب مرتبط بحسابك';
+          _pendingError = 'No sales representative record is linked to your account';
         });
         return;
       }
@@ -113,7 +113,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       final message = handleErpError(context, e);
       setState(() {
         _loadingPending = false;
-        _pendingError = message ?? 'تعذر تحميل النقلات بانتظار الاستلام';
+        _pendingError = message ?? 'Could not load transfers awaiting receipt';
       });
     }
   }
@@ -152,7 +152,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       if (salesPerson == null) {
         setState(() {
           _loadingCompleted = false;
-          _completedError = 'لا يوجد سجل مندوب مرتبط بحسابك';
+          _completedError = 'No sales representative record is linked to your account';
         });
         return;
       }
@@ -188,7 +188,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       final message = handleErpError(context, e);
       setState(() {
         _loadingCompleted = false;
-        _completedError = message ?? 'تعذر تحميل الشحنات السابقة';
+        _completedError = message ?? 'Could not load previous shipments';
       });
     }
   }
@@ -206,7 +206,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       if (itemsToSubmit.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('لا يمكن استلام كمية صفر لجميع الأصناف'),
+            content: Text('Received quantities cannot be zero for every item.'),
           ),
         );
         setState(() => _receivingName = null);
@@ -228,7 +228,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'تم تحديث حالة المخزون بنجاح ✅',
+            'Stock status updated successfully',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           backgroundColor: AppColors.success,
@@ -273,8 +273,8 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
   Future<void> _addItem() async {
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر صنف',
-      hintText: 'ابحث باسم الصنف...',
+      title: 'Select Item',
+      hintText: 'Search items...',
       search: (query) async {
         final list = await ErpService.getList(
           'Item',
@@ -343,7 +343,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
         setState(() => _lines.clear());
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('لا يوجد اتصال — تم الحفظ وسيُرسل تلقائيًا'),
+            content: Text('Offline. Saved and will be sent automatically.'),
           ),
         );
         return true;
@@ -356,7 +356,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
         context.push(documentDetailRoute('Material Request', createdName));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم إنشاء طلب المواد بنجاح')),
+          const SnackBar(content: Text('Material request created successfully')),
         );
       }
       return true;
@@ -371,7 +371,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
         setState(() => _lines.clear());
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('تعذر الاتصال — تم الحفظ وسيُرسل تلقائيًا'),
+            content: Text('Connection unavailable. Saved and will be sent automatically.'),
           ),
         );
         return true;
@@ -390,15 +390,15 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
     return Scaffold(
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: const Text('المخزون'),
+        title: const Text('Inventory'),
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.black,
           indicatorColor: AppColors.accent,
           tabs: const [
-            Tab(text: 'طلب مواد'),
-            Tab(text: 'شحنات في طريقي'),
-            Tab(text: 'شحنات سابقة'),
+            Tab(text: 'Material Request'),
+            Tab(text: 'Incoming Shipments'),
+            Tab(text: 'Previous Shipments'),
           ],
         ),
       ),
@@ -424,7 +424,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              _sectionTitle('مطلوب بتاريخ'),
+              _sectionTitle('Required By'),
               const SizedBox(height: 8),
               Material(
                 color: AppColors.white,
@@ -456,17 +456,17 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _sectionTitle('الأصناف'),
+                  _sectionTitle('Items'),
                   TextButton.icon(
                     onPressed: _addItem,
                     icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('إضافة صنف'),
+                    label: const Text('Add Item'),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               if (_lines.isEmpty)
-                _emptyCard('لم تُضف أي أصناف بعد')
+                _emptyCard('No items added yet')
               else
                 ..._lines.asMap().entries.map((entry) {
                   final index = entry.key;
@@ -531,8 +531,8 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
             child: IgnorePointer(
               ignoring: !canSubmit,
               child: SwipeToConfirmButton(
-                label: 'اسحب لإرسال طلب المواد',
-                confirmedLabel: 'تم إرسال الطلب',
+                label: 'Swipe to submit request',
+                confirmedLabel: 'Request submitted',
                 onConfirmed: _submitRequest,
                 wasQueued: () => _lastSubmitWasQueued,
               ),
@@ -563,7 +563,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       child: _pendingTransfers.isEmpty
           ? ListView(
               padding: const EdgeInsets.all(20),
-              children: [_emptyCard('لا توجد نقلات بانتظار استلامك حاليًا')],
+              children: [_emptyCard('No transfers are currently awaiting receipt')],
             )
           : ListView.builder(
               padding: const EdgeInsets.all(20),
@@ -646,7 +646,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'الأصناف المستلمة (تأكد من الكمية في حالة النواقص):',
+                                'Received items (check quantities if anything is missing):',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: AppColors.midGray,
@@ -764,7 +764,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                               if (justReceived)
                                 const Center(
                                   child: Text(
-                                    'تم تأكيد الاستلام بنجاح ✅',
+                                    'Receipt confirmed successfully',
                                     style: TextStyle(
                                       color: Colors.green,
                                       fontWeight: FontWeight.bold,
@@ -778,8 +778,8 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                                   child: IgnorePointer(
                                     ignoring: receiving,
                                     child: SwipeToConfirmButton(
-                                      label: 'اسحب لتأكيد الاستلام',
-                                      confirmedLabel: 'تم التأكيد',
+                                      label: 'Swipe to confirm receipt',
+                                      confirmedLabel: 'Confirmed',
                                       onConfirmed: () => _receiveTransfer(name),
                                     ),
                                   ),
@@ -816,7 +816,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       child: _completedTransfers.isEmpty
           ? ListView(
               padding: const EdgeInsets.all(20),
-              children: [_emptyCard('لم تقم باستلام أي شحنات سابقة')],
+              children: [_emptyCard('You have not received any previous shipments')],
             )
           : ListView.builder(
               padding: const EdgeInsets.all(20),

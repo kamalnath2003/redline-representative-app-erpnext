@@ -351,16 +351,16 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         title: Text(action),
-        content: const Text('هل أنت متأكد من تنفيذ هذا الإجراء؟'),
+        content: const Text('Are you sure you want to perform this action?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: Text(
-              'تأكيد',
+              'Confirm',
               style: const TextStyle(
                 color: AppColors.accent,
                 fontWeight: FontWeight.w700,
@@ -389,7 +389,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'لا يوجد اتصال — سيُنفَّذ "$action" تلقائيًا عند توفر الاتصال',
+            'Offline. "$action" will be completed automatically when you reconnect.',
           ),
         ),
       );
@@ -408,7 +408,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('تم تنفيذ "$action" بنجاح')));
+      ).showSnackBar(SnackBar(content: Text('"$action" completed successfully')));
       if (updated.isNotEmpty) setState(() => _doc = updated);
       await _loadTransitions();
     } catch (e) {
@@ -464,7 +464,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     if (sent) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('تم إرسال المستند بنجاح')));
+      ).showSnackBar(const SnackBar(content: Text('Document submitted successfully')));
     } else {
       // Show the REAL reason it failed (e.g. an actual insufficient-stock
       // rejection from the server) instead of a generic, unhelpful
@@ -480,7 +480,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر إرسال المستند — راجعه يدويًا')),
+          const SnackBar(content: Text('Could not submit the document. Please review it manually.')),
         );
       }
     }
@@ -545,7 +545,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
-        title: const Text('تعديل الخصم'),
+        title: const Text('Edit Discount'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -561,7 +561,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               // ANR reported on this exact device model, SM-A165F).
               autocorrect: false,
               enableSuggestions: false,
-              decoration: const InputDecoration(labelText: 'نسبة الخصم %'),
+              decoration: const InputDecoration(labelText: 'Discount Rate %'),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -571,19 +571,19 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               ),
               autocorrect: false,
               enableSuggestions: false,
-              decoration: const InputDecoration(labelText: 'قيمة الخصم'),
+              decoration: const InputDecoration(labelText: 'Discount Amount'),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text(
-              'حفظ',
+              'Save',
               style: TextStyle(
                 color: AppColors.accent,
                 fontWeight: FontWeight.w700,
@@ -623,7 +623,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('لا يوجد اتصال — سيُحفظ الخصم تلقائيًا'),
+            content: Text('Offline. Discount will be saved automatically.'),
           ),
         );
         return;
@@ -637,7 +637,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       setState(() => _doc = updated.isNotEmpty ? updated : _doc);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('تم تحديث الخصم بنجاح')));
+      ).showSnackBar(const SnackBar(content: Text('Discount updated successfully')));
     } catch (e) {
       if (e is ErpException && e.isConnectivityFailure) {
         await SyncEngine().enqueue(
@@ -651,7 +651,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر الاتصال — سيُحفظ الخصم تلقائيًا')),
+          const SnackBar(content: Text('Connection unavailable. Discount will be saved automatically.')),
         );
         return;
       }
@@ -688,7 +688,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('تعذر إنشاء ملف PDF: $e')));
+      ).showSnackBar(SnackBar(content: Text('Could not create PDF: $e')));
     } finally {
       if (mounted) setState(() => _sharingPdf = false);
     }
@@ -760,8 +760,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         SnackBar(
           content: Text(
             queued
-                ? 'لا يوجد اتصال — تم حفظ الصورة وسترفع تلقائيًا'
-                : 'تم إرفاق الصورة بالمستند بنجاح',
+                ? 'Offline. Photo saved and will be uploaded automatically.'
+                : 'Photo attached to the document successfully',
           ),
         ),
       );
@@ -805,13 +805,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     if (!mounted) return;
     if (uploaded > 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تم إرفاق $uploaded صورة بالمستند')),
+        SnackBar(content: Text('$uploaded photo(s) attached to the document')),
       );
     }
     if (queued > 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('لا يوجد اتصال — تم حفظ $queued صورة وسترفع تلقائيًا'),
+          content: Text('Offline. $queued photo(s) saved and will be uploaded automatically.'),
         ),
       );
     }
@@ -859,7 +859,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.card),
             ),
-            title: const Text('تحصيل دفعة'),
+            title: const Text('Collect Payment'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -870,14 +870,14 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     decimal: true,
                   ),
                   decoration: const InputDecoration(
-                    labelText: 'المبلغ المحصّل',
+                    labelText: 'Amount Collected',
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: receiptNumberController,
                   decoration: const InputDecoration(
-                    labelText: 'رقم الإيصال الورقي *',
+                    labelText: 'Paper Receipt Number *',
                   ),
                   onChanged: (_) => setDialogState(() {}),
                 ),
@@ -893,21 +893,21 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     Icons.account_balance_wallet_rounded,
                     size: 16,
                   ),
-                  label: Text(treasury?.treasuryName ?? 'اختر الخزنة '),
+                  label: Text(treasury?.treasuryName ?? 'Select Cash Account'),
                 ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('إلغاء'),
+                child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: receiptNumberController.text.trim().isEmpty
                     ? null
                     : () => Navigator.of(context).pop(true),
                 child: const Text(
-                  'تأكيد التحصيل',
+                  'Confirm Collection',
                   style: TextStyle(
                     color: AppColors.accent,
                     fontWeight: FontWeight.w700,
@@ -946,7 +946,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       final createdName = created['name'] as String?;
       if (createdName == null) {
         throw const ErpException(
-          'تم إنشاء التحصيل لكن لم يرجع السيرفر رقم السند.',
+          'The collection was created, but the server did not return a receipt number.',
           serverRejected: true,
         );
       }
@@ -958,7 +958,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'تم حفظ سند $createdName كمسودة، لكن تعذر ترحيله. ${message ?? ''}',
+              'Receipt $createdName was saved as a draft but could not be submitted. ${message ?? ''}',
             ),
           ),
         );
@@ -967,7 +967,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم تسجيل وترحيل التحصيل بنجاح')),
+        const SnackBar(content: Text('Collection recorded and submitted successfully')),
       );
       final customer =
           draft['party']?.toString() ?? _doc?['customer']?.toString();
@@ -1024,8 +1024,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           SnackBar(
             content: Text(
               added
-                  ? 'تمت إضافة التذكير للتقويم'
-                  : (CalendarService.lastError ?? 'تعذر إضافة التذكير للتقويم'),
+                  ? 'Reminder added to calendar'
+                  : (CalendarService.lastError ?? 'Could not add reminder to calendar'),
             ),
           ),
         );
@@ -1036,7 +1036,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       if (!_addingAllReminders) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('تعذر إضافة التذكير: $e')));
+        ).showSnackBar(SnackBar(content: Text('Could not add reminder: $e')));
       }
       return false;
     } finally {
@@ -1076,10 +1076,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       SnackBar(
         content: Text(
           total == 0
-              ? 'لا توجد مواعيد استحقاق لإضافتها'
+              ? 'There are no due dates to add'
               : succeeded == 0 && CalendarService.lastError != null
               ? CalendarService.lastError!
-              : 'تمت إضافة $succeeded من $total تذكيرًا للتقويم',
+              : 'Added $succeeded of $total reminders to the calendar',
         ),
       ),
     );
@@ -1104,24 +1104,24 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('إغلاق المذكرة'),
+        title: const Text('Close Issue'),
         content: TextField(
           controller: resolution,
           minLines: 3,
           maxLines: 6,
           decoration: const InputDecoration(
-            labelText: 'تفاصيل الحل',
-            hintText: 'اكتب ما تم اتخاذه لإنهاء المذكرة',
+            labelText: 'Resolution Details',
+            hintText: 'Describe how the issue was resolved',
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('تأكيد الإغلاق'),
+            child: const Text('Confirm Closure'),
           ),
         ],
       ),
@@ -1141,7 +1141,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       await Future.wait([_loadActivity(), _loadComments()]);
       if (!mounted) return true;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم إغلاق المذكرة وإرسال إشعار لمنشئها')),
+        const SnackBar(content: Text('Issue closed and its creator notified')),
       );
       return true;
     } catch (e) {
@@ -1164,10 +1164,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   /// plain Arabic, not the raw role name.
   String _tierLabel(String tier) =>
       const {
-        'WF - Sales Rep': 'مندوب مبيعات',
-        'WF - Region Manager': 'مدير منطقة',
-        'WF - Accounts Manager': 'مدير حسابات',
-        'WF - General Manager': 'مدير عام',
+        'WF - Sales Rep': 'Sales Representative',
+        'WF - Region Manager': 'Region Manager',
+        'WF - Accounts Manager': 'Accounts Manager',
+        'WF - General Manager': 'General Manager',
       }[tier] ??
       tier;
 
@@ -1223,15 +1223,15 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.card),
             ),
-            title: const Text('تعديل خصم الصنف'),
+            title: const Text('Edit Item Discount'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   tierLabel != null
-                      ? 'أقصى خصم مسموح لك ($tierLabel): $limit%'
-                      : 'أقصى خصم مسموح لمستواك: $limit%',
+                      ? 'Your maximum discount ($tierLabel): $limit%'
+                      : 'Maximum discount for your role: $limit%',
                   style: const TextStyle(
                     color: AppColors.midGray,
                     fontSize: 12.5,
@@ -1248,9 +1248,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   enableSuggestions: false,
                   onChanged: (_) => setDialogState(() {}),
                   decoration: InputDecoration(
-                    labelText: 'نسبة الخصم %',
+                    labelText: 'Discount Rate %',
                     errorText: exceeds
-                        ? 'أكبر من الحد المسموح ($limit%)'
+                        ? 'Exceeds the allowed limit ($limit%)'
                         : null,
                   ),
                 ),
@@ -1259,14 +1259,14 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('إلغاء'),
+                child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: exceeds
                     ? null
                     : () => Navigator.of(context).pop(true),
                 child: const Text(
-                  'حفظ',
+                  'Save',
                   style: TextStyle(
                     color: AppColors.accent,
                     fontWeight: FontWeight.w700,
@@ -1306,7 +1306,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('لا يوجد اتصال — سيُحفظ خصم الصنف تلقائيًا'),
+            content: Text('Offline. Item discount will be saved automatically.'),
           ),
         );
         return;
@@ -1320,7 +1320,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       setState(() => _doc = updated.isNotEmpty ? updated : _doc);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('تم تحديث خصم الصنف بنجاح')));
+      ).showSnackBar(const SnackBar(content: Text('Item discount updated successfully')));
     } catch (e) {
       if (e is ErpException && e.isConnectivityFailure) {
         await SyncEngine().enqueue(
@@ -1335,7 +1335,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('تعذر الاتصال — سيُحفظ خصم الصنف تلقائيًا'),
+            content: Text('Connection unavailable. Item discount will be saved automatically.'),
           ),
         );
         return;
@@ -1405,8 +1405,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   Future<void> _pickMention() async {
     final result = await showSearchPicker(
       context: context,
-      title: 'منشن مستخدم',
-      hintText: 'ابحث باسم المستخدم...',
+      title: 'Mention User',
+      hintText: 'Search users...',
       search: (query) async {
         final list = await ErpService.getList(
           'User',
@@ -1476,7 +1476,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         _pickedMentions.clear();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('لا يوجد اتصال — سيُرسل التعليق تلقائيًا'),
+            content: Text('Offline. Comment will be sent automatically.'),
           ),
         );
         return;
@@ -1509,7 +1509,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         _pickedMentions.clear();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('تعذر الاتصال — سيُرسل التعليق تلقائيًا'),
+            content: Text('Connection unavailable. Comment will be sent automatically.'),
           ),
         );
         return;
@@ -1529,10 +1529,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final time = DateTime.tryParse(iso ?? '');
     if (time == null) return '';
     final diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 1) return 'الآن';
-    if (diff.inMinutes < 60) return 'منذ ${diff.inMinutes} دقيقة';
-    if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعة';
-    if (diff.inDays < 7) return 'منذ ${diff.inDays} يوم';
+    if (diff.inMinutes < 1) return 'Now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${time.year}-${time.month.toString().padLeft(2, '0')}-${time.day.toString().padLeft(2, '0')}';
   }
 
@@ -1564,7 +1564,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       const SizedBox(height: 12),
                       TextButton(
                         onPressed: _loadDocument,
-                        child: const Text('حاول مرة أخرى'),
+                        child: const Text('Try again'),
                       ),
                     ],
                   ),
@@ -1669,7 +1669,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 if (subtitle != null) ...[
                   const SizedBox(height: 6),
                   Text(
-                    'العميل: $subtitle',
+                    'Customer: $subtitle',
                     style: const TextStyle(
                       color: AppColors.black,
                       fontWeight: FontWeight.w700,
@@ -1680,9 +1680,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 if (_customerCredit != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'سقف الدين: ${((_customerCredit!['credit_limit'] as num?) ?? 0).toStringAsFixed(2)} ج.م  •  '
-                    'المديونية: ${((_customerCredit!['outstanding'] as num?) ?? 0).toStringAsFixed(2)} ج.م  •  '
-                    'المتاح: ${((_customerCredit!['available'] as num?) ?? 0).toStringAsFixed(2)} ج.م',
+                    'Credit limit: ${((_customerCredit!['credit_limit'] as num?) ?? 0).toStringAsFixed(2)} EGP  •  '
+                    'Outstanding: ${((_customerCredit!['outstanding'] as num?) ?? 0).toStringAsFixed(2)} EGP  •  '
+                    'Available: ${((_customerCredit!['available'] as num?) ?? 0).toStringAsFixed(2)} EGP',
                     style: const TextStyle(
                       color: AppColors.accent,
                       fontWeight: FontWeight.w700,
@@ -1693,7 +1693,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 if (doc['payment_terms_template'] != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'شرط الدفع: ${doc['payment_terms_template']}',
+                    'Payment Terms: ${doc['payment_terms_template']}',
                     style: const TextStyle(
                       color: AppColors.midGray,
                       fontSize: 13,
@@ -1703,7 +1703,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 if (doc['delivery_date'] != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'موعد الاستلام: ${doc['delivery_date']}',
+                    'Delivery Date: ${doc['delivery_date']}',
                     style: const TextStyle(
                       color: AppColors.midGray,
                       fontSize: 13,
@@ -1713,7 +1713,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 if (amount != null) ...[
                   const SizedBox(height: 8),
                   Text(
-                    'الإجمالي: $amount',
+                    'Total: $amount EGP',
                     style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
@@ -1748,7 +1748,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                             )
                           : const Icon(Icons.picture_as_pdf_rounded, size: 16),
                       label: Text(
-                        _sharingPdf ? 'جاري التجهيز...' : 'مشاركة / طباعة PDF',
+                        _sharingPdf ? 'Preparing...' : 'Share / Print PDF',
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1766,7 +1766,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                           )
                         : const Icon(Icons.camera_alt_rounded, size: 16),
                     label: Text(
-                      _attachingPhoto ? 'جاري الإرفاق...' : 'تصوير وإرفاق',
+                      _attachingPhoto ? 'Attaching...' : 'Take and Attach Photo',
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -1784,7 +1784,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     )
                   : const Icon(Icons.photo_library_rounded, size: 16),
               label: Text(
-                _uploadingImages ? 'جاري الرفع...' : 'رفع صور من المعرض',
+                _uploadingImages ? 'Uploading...' : 'Upload Photos from Gallery',
               ),
             ),
           ],
@@ -1807,8 +1807,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   : const Icon(Icons.payments_rounded, size: 16),
               label: Text(
                 _collectingPayment
-                    ? 'جاري التسجيل...'
-                    : 'تحصيل دفعة (المستحق: ${doc['outstanding_amount']})',
+                    ? 'Recording...'
+                    : 'Collect Payment (Outstanding: ${doc['outstanding_amount']})',
               ),
             ),
           ],
@@ -1823,7 +1823,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.percent_rounded, size: 16),
-              label: Text(_editingDiscount ? 'جاري الحفظ...' : 'تعديل الخصم'),
+              label: Text(_editingDiscount ? 'Saving...' : 'Edit Discount'),
             ),
           ],
           if (_canCloseIssue) ...[
@@ -1833,8 +1833,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               child: Opacity(
                 opacity: _closingIssue ? 0.5 : 1,
                 child: SwipeToConfirmButton(
-                  label: 'اسحب لإغلاق المذكرة',
-                  confirmedLabel: 'تم إغلاق المذكرة',
+                  label: 'Swipe to close issue',
+                  confirmedLabel: 'Issue closed',
                   onConfirmed: _closeIssue,
                 ),
               ),
@@ -1853,7 +1853,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 if (mounted) _loadDocument();
               },
               icon: const Icon(Icons.edit_rounded, size: 16),
-              label: const Text('تعديل المستند'),
+              label: const Text('Edit Document'),
             ),
           ],
           if (canSend) ...[
@@ -1868,9 +1868,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   // "إعادة إرسال للاعتماد" after a revision request), never
                   // a hardcoded "send" string.
                   label: _transitions.isEmpty
-                      ? 'اسحب لترحيل سند القبض'
-                      : 'اسحب لـ ${_transitions.first['action'] ?? 'الإرسال'}',
-                  confirmedLabel: 'تم الإرسال',
+                        ? 'Swipe to submit receipt'
+                        : 'Swipe to ${_transitions.first['action'] ?? 'submit'}',
+                      confirmedLabel: 'Submitted',
                   onConfirmed: _sendDocument,
                 ),
               ),
@@ -1890,7 +1890,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   Icon(Icons.check_rounded, color: AppColors.white, size: 18),
                   SizedBox(width: 6),
                   Text(
-                    'تم الإرسال',
+                    'Submitted',
                     style: TextStyle(
                       color: AppColors.white,
                       fontWeight: FontWeight.w700,
@@ -1915,7 +1915,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           ] else if (_workflowStates.isNotEmpty) ...[
             const SizedBox(height: 20),
             const Text(
-              'مسار الاعتماد',
+              'Approval Workflow',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
@@ -1927,7 +1927,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             if (_originActorName != null) ...[
               const SizedBox(height: 8),
               Text(
-                'آخر إجراء بواسطة: $_originActorName',
+                'Last action by: $_originActorName',
                 style: const TextStyle(
                   color: AppColors.midGray,
                   fontSize: 11.5,
@@ -1950,7 +1950,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           ] else if (showActionChips) ...[
             const SizedBox(height: 20),
             const Text(
-              'الإجراء التالي',
+              'Next Action',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
@@ -1972,7 +1972,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           _buildActivitySection(),
           const SizedBox(height: 24),
           const Text(
-            'التعليقات',
+            'Comments',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
@@ -1989,7 +1989,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               ),
               child: const Center(
                 child: Text(
-                  'لا توجد تعليقات بعد',
+                  'No comments yet',
                   style: TextStyle(color: AppColors.midGray),
                 ),
               ),
@@ -2065,7 +2065,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'الأصناف',
+            'Items',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
@@ -2112,7 +2112,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         if (item['batch_no']?.toString().trim().isNotEmpty ??
                             false)
                           Text(
-                            'الدفعة: ${item['batch_no']}',
+                            'Batch: ${item['batch_no']}',
                             style: const TextStyle(
                               color: AppColors.midGray,
                               fontSize: 11.5,
@@ -2121,7 +2121,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         if (item['serial_no']?.toString().trim().isNotEmpty ??
                             false)
                           Text(
-                            'السيريال: ${item['serial_no'].toString().replaceAll('\n', '، ')}',
+                            'Serial: ${item['serial_no'].toString().replaceAll('\n', ', ')}',
                             style: const TextStyle(
                               color: AppColors.midGray,
                               fontSize: 11.5,
@@ -2130,7 +2130,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         if (discountPercentage != null &&
                             discountPercentage > 0)
                           Text(
-                            'خصم الصنف: $discountPercentage%',
+                            'Item Discount: $discountPercentage%',
                             style: const TextStyle(
                               color: AppColors.accent,
                               fontSize: 11.5,
@@ -2154,7 +2154,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                                 _editItemDiscount(index, item, discountLimit),
                             icon: const Icon(Icons.percent_rounded, size: 18),
                             color: AppColors.midGray,
-                            tooltip: 'تعديل خصم الصنف',
+                            tooltip: 'Edit item discount',
                           ),
                 ],
               ),
@@ -2169,21 +2169,21 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     if (widget.doctype != 'Issue') return null;
     final fields =
         <(String, dynamic)>[
-          ('الموضوع', doc['subject']),
-          ('العميل', doc['customer']),
-          ('الحالة', _issueStatusLabel(doc['status']?.toString())),
-          ('الأولوية', doc['priority']),
-          ('نوع المذكرة', doc['issue_type']),
-          ('التفاصيل', _plainText(doc['description'])),
-          ('أول رد', doc['first_responded_on']),
-          ('تاريخ الفتح', doc['opening_date']),
-          ('العميل المحتمل', doc['lead']),
-          ('جهة الاتصال', doc['contact']),
-          ('حساب البريد', doc['email_account']),
-          ('المشروع', doc['project']),
-          ('الشركة', doc['company']),
-          ('منشئ المذكرة', doc['owner']),
-          ('عبر بوابة العملاء', doc['via_customer_portal'] == 1 ? 'نعم' : 'لا'),
+          ('Subject', doc['subject']),
+          ('Customer', doc['customer']),
+          ('Status', _issueStatusLabel(doc['status']?.toString())),
+          ('Priority', doc['priority']),
+          ('Issue Type', doc['issue_type']),
+          ('Details', _plainText(doc['description'])),
+          ('First Responded', doc['first_responded_on']),
+          ('Opening Date', doc['opening_date']),
+          ('Lead', doc['lead']),
+          ('Contact', doc['contact']),
+          ('Email Account', doc['email_account']),
+          ('Project', doc['project']),
+          ('Company', doc['company']),
+          ('Issue Creator', doc['owner']),
+          ('Via Customer Portal', doc['via_customer_portal'] == 1 ? 'Yes' : 'No'),
         ].where((entry) {
           final value = entry.$2;
           return value != null && value.toString().trim().isNotEmpty;
@@ -2200,7 +2200,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'تفاصيل المذكرة',
+            'Issue Details',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
@@ -2251,14 +2251,14 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               Icon(Icons.task_alt_rounded, color: AppColors.success),
               SizedBox(width: 8),
               Text(
-                'الحل النهائي',
+                'Resolution',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
-            resolution ?? 'تم إغلاق المذكرة بدون إضافة تفاصيل للحل.',
+            resolution ?? 'The issue was closed without resolution details.',
             style: const TextStyle(fontSize: 13.5, height: 1.5),
           ),
         ],
@@ -2273,11 +2273,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   }
 
   String _issueStatusLabel(String? status) => switch (status) {
-    'Open' => 'مفتوحة',
-    'Replied' => 'تم الرد',
-    'On Hold' => 'معلقة',
-    'Resolved' => 'تم الحل',
-    'Closed' => 'مغلقة',
+    'Open' => 'Open',
+    'Replied' => 'Replied',
+    'On Hold' => 'On Hold',
+    'Resolved' => 'Resolved',
+    'Closed' => 'Closed',
     _ => status ?? '—',
   };
 
@@ -2302,16 +2302,16 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (netTotal != null) _totalsRow('الصافي', netTotal),
+          if (netTotal != null) _totalsRow('Net', netTotal),
           if (discountAmount is num && discountAmount > 0)
             _totalsRow(
               (discountPercent is num && discountPercent > 0)
-                  ? 'الخصم ($discountPercent%)'
-                  : 'الخصم',
+                  ? 'Discount ($discountPercent%)'
+                  : 'Discount',
               discountAmount,
             ),
           if (grandTotal != null)
-            _totalsRow('الإجمالي النهائي', grandTotal, bold: true),
+            _totalsRow('Grand Total', grandTotal, bold: true),
         ],
       ),
     );
@@ -2348,7 +2348,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'جدول الدفعات',
+                'Payment Schedule',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
               ),
               TextButton.icon(
@@ -2364,8 +2364,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     : const Icon(Icons.event_available_rounded, size: 16),
                 label: Text(
                   _addingAllReminders
-                      ? 'جاري الإضافة...'
-                      : 'إضافة الكل للتقويم',
+                      ? 'Adding...'
+                      : 'Add All to Calendar',
                 ),
               ),
             ],
@@ -2412,7 +2412,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                           ),
                         if (row['invoice_portion'] != null)
                           Text(
-                            'نسبة الفاتورة: ${row['invoice_portion']}%',
+                            'Invoice Portion: ${row['invoice_portion']}%',
                             style: const TextStyle(
                               color: AppColors.midGray,
                               fontSize: 12,
@@ -2420,7 +2420,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                           ),
                         if (amount != null)
                           Text(
-                            '${amount.toStringAsFixed(2)} ج.م',
+                            '${amount.toStringAsFixed(2)} EGP',
                             style: const TextStyle(
                               color: AppColors.midGray,
                               fontSize: 12,
@@ -2452,7 +2452,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                             size: 20,
                           ),
                           color: AppColors.accent,
-                          tooltip: 'إضافة تذكير للتقويم',
+                          tooltip: 'Add calendar reminder',
                         ),
                 ],
               ),
@@ -2478,7 +2478,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'فريق المبيعات',
+            'Sales Team',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
@@ -2495,7 +2495,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   ),
                   Text('${row['allocated_percentage'] ?? 0}%'),
                   const SizedBox(width: 12),
-                  Text('${row['allocated_amount'] ?? 0} ج.م'),
+                  Text('${row['allocated_amount'] ?? 0} EGP'),
                 ],
               ),
             ),
@@ -2524,7 +2524,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'سجل النشاط',
+            'Activity Log',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
@@ -2556,7 +2556,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            (event['label'] ?? 'تحديث').toString(),
+                            (event['label'] ?? 'Update').toString(),
                             style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                           Text(
@@ -2616,14 +2616,14 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               onPressed: _pickMention,
               icon: const Icon(Icons.alternate_email_rounded),
               color: AppColors.midGray,
-              tooltip: 'منشن مستخدم',
+              tooltip: 'Mention user',
             ),
             Expanded(
               child: TextField(
                 controller: _commentController,
                 minLines: 1,
                 maxLines: 4,
-                decoration: const InputDecoration(hintText: 'اكتب تعليقًا...'),
+                decoration: const InputDecoration(hintText: 'Write a comment...'),
               ),
             ),
             const SizedBox(width: 8),

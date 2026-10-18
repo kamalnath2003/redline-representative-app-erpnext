@@ -225,12 +225,14 @@ class _RedErpAppState extends State<RedErpApp> {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Red ERP',
+      locale: const Locale('en'),
+      supportedLocales: const [Locale('en')],
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
       routerConfig: _router,
       builder: (context, child) {
         return Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: TextDirection.ltr,
           child: child ?? const SizedBox.shrink(),
         );
       },

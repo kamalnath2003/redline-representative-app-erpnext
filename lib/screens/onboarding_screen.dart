@@ -14,18 +14,18 @@ class _OnboardPage {
 const _pages = [
   _OnboardPage(
     Icons.point_of_sale_rounded,
-    'إدارة كاملة لعمليات البيع',
-    'أصدر الفواتير وتابع الطلبيات والعملاء من مكان واحد بسهولة تامة.',
+    'Manage sales in one place',
+    'Create invoices and manage orders and customers with ease.',
   ),
   _OnboardPage(
     Icons.account_balance_wallet_rounded,
-    'خزنة وتحصيلات لحظية',
-    'تابع رصيدك ومصروفاتك وتحصيلاتك اليومية أولًا بأول.',
+    'Track cash and collections',
+    'Keep track of balances, expenses, and daily collections.',
   ),
   _OnboardPage(
     Icons.sync_rounded,
-    'متصل دائمًا مع ERPNext',
-    'كل بياناتك تتزامن مباشرة مع نظام إدارة المؤسسة الخاص بشركتك.',
+    'Always connected to ERPNext',
+    'Your data syncs directly with your company’s ERP system.',
   ),
 ];
 
@@ -63,7 +63,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: TextButton(
                   onPressed: _goToAuth,
-                  child: const Text('تخطي'),
+                  child: const Text('Skip'),
                 ),
               ),
             ),
@@ -119,7 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             Semantics(
-              label: 'صفحة ${_index + 1} من ${_pages.length}',
+              label: 'Page ${_index + 1} of ${_pages.length}',
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(_pages.length, (i) {
@@ -152,7 +152,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       );
                     }
                   },
-                  child: Text(isLast ? 'ابدأ' : 'التالي'),
+                  child: Text(isLast ? 'Get started' : 'Next'),
                 ),
               ),
             ),

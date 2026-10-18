@@ -112,13 +112,8 @@ class _StockMovementScreenState extends State<StockMovementScreen>
         setState(() {
           _loadingWarehouses = false;
           _warehousesError = userId != null
-              ? 'لا يوجد سجل "مندوب مبيعات" (Sales Person) مرتبط بحسابك '
-                    '($userId) — افتح سجل مندوبك في Sales Person وتأكد إن '
-                    'حقل "مستخدم التطبيق المرتبط" (custom_user) يساوي '
-                    'هذا البريد بالضبط (بدون مسافات زيادة أو اختلاف في '
-                    'الأحرف الكبيرة/الصغيرة).'
-              : 'تعذر تحديد هوية المستخدم الحالي — تحقق من الاتصال '
-                    'بالإنترنت وحاول تسجيل الدخول من جديد.';
+                ? 'No Sales Person record is linked to your account ($userId). Open your Sales Person record and make sure the linked app user (custom_user) matches this email exactly.'
+                : 'Could not identify the current user. Check your internet connection and sign in again.';
         });
         return;
       }
@@ -133,7 +128,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
       if (candidates.isEmpty) {
         setState(() {
           _loadingWarehouses = false;
-          _warehousesError = 'لا يوجد مخزن مرتبط بحسابك';
+          _warehousesError = 'No warehouse is linked to your account';
         });
         return;
       }
@@ -160,7 +155,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
       final message = handleErpError(context, e);
       setState(() {
         _loadingWarehouses = false;
-        _warehousesError = message ?? 'تعذر تحميل بيانات المخازن';
+        _warehousesError = message ?? 'Could not load warehouse data';
       });
     }
   }
@@ -202,7 +197,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
       if (repSalesPersons.isEmpty) {
         setState(() {
           _loadingWarehouses = false;
-          _warehousesError = 'لا يوجد مناديب أو مخازن مرتبطة بمنطقتك';
+          _warehousesError = 'No representatives or warehouses are linked to your territory';
         });
         return;
       }
@@ -231,7 +226,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
       if (candidates.isEmpty) {
         setState(() {
           _loadingWarehouses = false;
-          _warehousesError = 'لا يوجد مخازن مرتبطة بمناديب منطقتك';
+          _warehousesError = 'No warehouses are linked to representatives in your territory';
         });
         return;
       }
@@ -258,7 +253,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
       final message = handleErpError(context, e);
       setState(() {
         _loadingWarehouses = false;
-        _warehousesError = message ?? 'تعذر تحميل بيانات مخازن منطقتك';
+        _warehousesError = message ?? 'Could not load warehouse data for your territory';
       });
     }
   }
@@ -340,13 +335,13 @@ class _StockMovementScreenState extends State<StockMovementScreen>
             .whereType<String>()
             .where((value) => value.isNotEmpty)
             .toSet()
-            .join('، ');
+            .join(', ');
         row['_resolved_serial_nos'] = matching
             .map((entry) => entry['serial_no']?.toString())
             .whereType<String>()
             .where((value) => value.isNotEmpty)
             .toSet()
-            .join('، ');
+            .join(', ');
       }
     } catch (_) {
       // Older sites may expose only the legacy fields already on SLE.
@@ -395,7 +390,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
       final message = handleErpError(context, e);
       setState(() {
         _loadingWarehouseMovements = false;
-        _warehouseMovementsError = message ?? 'تعذر تحميل حركة المخزن';
+        _warehouseMovementsError = message ?? 'Could not load warehouse movements';
       });
     }
   }
@@ -403,7 +398,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
   Future<void> _pickItem() async {
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر صنف',
+      title: 'Select Item',
       search: (query) async {
         final list = await ErpService.getList(
           'Item',
@@ -472,7 +467,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
       final message = handleErpError(context, e);
       setState(() {
         _loadingItemMovements = false;
-        _itemMovementsError = message ?? 'تعذر تحميل حركة الصنف';
+        _itemMovementsError = message ?? 'Could not load item movements';
       });
     }
   }
@@ -495,12 +490,12 @@ class _StockMovementScreenState extends State<StockMovementScreen>
               const Padding(
                 padding: EdgeInsets.all(16),
                 child: Text(
-                  'اختر المخزن',
+                  'Select Warehouse',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                 ),
               ),
               ListTile(
-                title: const Text('كل المخازن المتاحة لك'),
+                title: const Text('All Available Warehouses'),
                 trailing: _selectedWarehouse == null
                     ? const Icon(Icons.check_rounded, color: AppColors.accent)
                     : null,
@@ -532,7 +527,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
     try {
       final selected = _selectedWarehouse;
       final label = selected == null
-          ? 'كل المخازن المتاحة'
+          ? 'All Available Warehouses'
           : (_allowedWarehouses[selected] ?? selected);
       final bytes = await PdfBuilderService.buildStockStatementPdf(
         warehouseLabel: label,
@@ -553,12 +548,12 @@ class _StockMovementScreenState extends State<StockMovementScreen>
             .toList(),
       );
       if (!mounted) return;
-      await Printing.sharePdf(bytes: bytes, filename: 'كشف حركة المخزن.pdf');
+      await Printing.sharePdf(bytes: bytes, filename: 'warehouse-movement.pdf');
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('تعذر إنشاء كشف المخزن: $error')));
+      ).showSnackBar(SnackBar(content: Text('Could not create warehouse statement: $error')));
     } finally {
       if (mounted) setState(() => _exportingPdf = false);
     }
@@ -569,20 +564,20 @@ class _StockMovementScreenState extends State<StockMovementScreen>
     return Scaffold(
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: const Text('حركة المخزون'),
+        title: const Text('Stock Movement'),
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.accent,
           unselectedLabelColor: AppColors.midGray,
           indicatorColor: AppColors.accent,
           tabs: const [
-            Tab(text: 'حركة المخزن'),
-            Tab(text: 'حركة صنف'),
+            Tab(text: 'Warehouse'),
+            Tab(text: 'Item'),
           ],
         ),
         actions: [
           IconButton(
-            tooltip: 'تصدير كشف المخزن PDF',
+            tooltip: 'Export warehouse statement PDF',
             onPressed: _warehouseMovements.isEmpty || _exportingPdf
                 ? null
                 : _exportWarehouseStatement,
@@ -640,7 +635,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
     if (_warehouseMovements.isEmpty) {
       return const Center(
         child: Text(
-          'لا توجد حركات',
+          'No movements found',
           style: TextStyle(color: AppColors.midGray),
         ),
       );
@@ -674,7 +669,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        _selectedItem?.label ?? 'اختر صنف لعرض حركته',
+                        _selectedItem?.label ?? 'Select an item to view movements',
                         style: TextStyle(
                           color: _selectedItem == null
                               ? AppColors.midGray
@@ -685,7 +680,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
                       ),
                     ),
                     const Icon(
-                      Icons.chevron_left_rounded,
+                      Icons.chevron_right_rounded,
                       color: AppColors.midGray,
                     ),
                   ],
@@ -703,7 +698,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
     if (_selectedItem == null) {
       return const Center(
         child: Text(
-          'اختر صنف عشان تشوف حركته',
+          'Select an item to view its movements',
           style: TextStyle(color: AppColors.midGray),
         ),
       );
@@ -724,7 +719,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
     if (_itemMovements.isEmpty) {
       return const Center(
         child: Text(
-          'لا توجد حركات لهذا الصنف',
+          'No movements found for this item',
           style: TextStyle(color: AppColors.midGray),
         ),
       );
@@ -797,7 +792,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
                     ),
                     if (row.batchNos.isNotEmpty)
                       Text(
-                        'الدفعة: ${row.batchNos}',
+                        'Batch: ${row.batchNos}',
                         style: const TextStyle(
                           color: AppColors.midGray,
                           fontSize: 11,
@@ -805,7 +800,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
                       ),
                     if (row.serialNos.isNotEmpty)
                       Text(
-                        'السيريال: ${row.serialNos}',
+                        'Serial: ${row.serialNos}',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -828,7 +823,7 @@ class _StockMovementScreenState extends State<StockMovementScreen>
                     ),
                   ),
                   Text(
-                    'الرصيد: ${row.qtyAfter.toStringAsFixed(2)}',
+                    'Balance: ${row.qtyAfter.toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: AppColors.midGray,
                       fontSize: 10.5,

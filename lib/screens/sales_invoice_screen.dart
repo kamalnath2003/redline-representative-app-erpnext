@@ -259,7 +259,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت'),
+          content: Text('Could not determine your territories. Check your internet connection.'),
         ),
       );
       return;
@@ -269,8 +269,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
 
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر العميل',
-      hintText: 'ابحث باسم العميل...',
+      title: 'Select Customer',
+      hintText: 'Search customers...',
       search: (query) async {
         final filters = <List<dynamic>>[
           if (query.isNotEmpty) ['customer_name', 'like', '%$query%'],
@@ -345,12 +345,12 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               IconButton(
                 icon: const Icon(Icons.tune_rounded),
                 tooltip: territoryFilter == null
-                    ? 'فلترة بخط السير'
-                    : 'خط السير: $territoryFilter',
+                    ? 'Filter by Territory'
+                    : 'Territory: $territoryFilter',
                 onPressed: () async {
                   final picked = await showSearchPicker(
                     context: pickerContext,
-                    title: 'اختر خط السير',
+                    title: 'Select Territory',
                     search: (q) async => territories
                         .where(
                           (t) =>
@@ -389,7 +389,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     try {
       final customerDoc = await ErpService.getDoc('Customer', result.name);
       if (customerDoc.isEmpty) {
-        _creditLimitStatus = 'تعذر جلب بيانات العميل من السيرفر';
+        _creditLimitStatus = 'Could not load customer data from the server';
         _priceListStatus = _creditLimitStatus;
       } else {
         // Credit limit lives in the `credit_limits` child table (rows of
@@ -415,16 +415,16 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           final limit = matchedRow['credit_limit'] as num?;
           if (limit == null || limit == 0) {
             _creditLimitStatus =
-                'سقف الدين لهذا العميل مسجّل بقيمة صفر أو فارغة';
+                'This customer’s credit limit is zero or empty';
           } else {
             _creditLimit = limit;
           }
         } else if (creditLimitRows is List) {
           _creditLimitStatus =
-              'لا يوجد سقف دين مسجّل لهذا العميل (جدول الحدود فارغ)';
+              'No credit limit is set for this customer (the limits table is empty)';
         } else {
           _creditLimitStatus =
-              'حقل حدود الائتمان غير ظاهر لحسابك (على الأغلب محمي بصلاحية على السيرفر)';
+              'The credit limit field is not available to your account. It may be restricted by server permissions.';
         }
 
         _priceList = customerDoc['default_price_list'] as String?;
@@ -433,17 +433,17 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         }
         if (_priceList == null) {
           _priceListStatus =
-              'لا توجد قائمة أسعار افتراضية للعميل ولا في إعدادات البيع';
+              'No default price list is set for this customer or in Sales Settings';
         }
       }
     } catch (e) {
-      _creditLimitStatus = 'فشل الاتصال بالسيرفر أثناء جلب بيانات العميل: $e';
+      _creditLimitStatus = 'Could not connect to the server while loading customer data: $e';
       _priceListStatus = _creditLimitStatus;
     }
 
     final outstanding = await _fetchCurrentOutstanding(result.name);
     if (outstanding == null) {
-      _outstandingStatus = 'تعذر جلب المديونية الحالية لهذا العميل';
+      _outstandingStatus = 'Could not load this customer’s outstanding balance';
     } else {
       _currentOutstanding = outstanding;
     }
@@ -454,8 +454,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   Future<void> _addItem() async {
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر صنف',
-      hintText: 'ابحث باسم الصنف...',
+      title: 'Select Item',
+      hintText: 'Search items...',
       search: (query) async {
         final list = await CacheService.getSearchListCached(
           cacheDoctype: 'Item_master',
@@ -538,7 +538,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'هذا الصنف يتطلب رقم لوط، ولا يوجد مخزن مسجل على حسابك',
+              'This item requires a batch number, but no warehouse is linked to your account',
             ),
           ),
         );
@@ -564,7 +564,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'لا يوجد رصيد من أي لوط لصنف "${line.itemName}" في مخزنك',
+              'No batch stock is available for "${line.itemName}" in your warehouse',
             ),
           ),
         );
@@ -589,7 +589,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'اختر رقم اللوط — ${line.itemName}',
+                  'Select Batch — ${line.itemName}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
@@ -605,8 +605,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                   ),
                   title: Text(b['batch_no'] as String? ?? '—'),
                   subtitle: Text(
-                    'الكمية المتاحة: ${((b['qty'] as num?) ?? 0).toStringAsFixed(0)}'
-                    '${expiry != null ? ' • صلاحية حتى $expiry' : ''}',
+                    'Available quantity: ${((b['qty'] as num?) ?? 0).toStringAsFixed(0)}'
+                    '${expiry != null ? ' • Expires $expiry' : ''}',
                   ),
                   onTap: () => Navigator.of(context).pop(b),
                 );
@@ -653,7 +653,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     if (warehouses.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('لا يوجد مخزن سيارة مرتبط بالمندوب')),
+          const SnackBar(content: Text('No vehicle warehouse is linked to this representative')),
         );
       }
       return false;
@@ -672,7 +672,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'لا توجد أرقام سيريال متاحة لهذا الصنف في مخزن السيارة',
+              'No serial numbers are available for this item in the vehicle warehouse',
             ),
           ),
         );
@@ -686,7 +686,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('اختر أرقام السيريال'),
+          title: const Text('Select Serial Numbers'),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView(
@@ -698,7 +698,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                   title: Text(serial),
                   subtitle: row['batch_no'] == null
                       ? null
-                      : Text('الدفعة: ${row['batch_no']}'),
+                      : Text('Batch: ${row['batch_no']}'),
                   onChanged: (checked) => setDialogState(() {
                     checked == true
                         ? selected.add(serial)
@@ -711,13 +711,13 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('إلغاء'),
+              child: const Text('Cancel'),
             ),
             FilledButton(
               onPressed: selected.isEmpty
                   ? null
                   : () => Navigator.pop(dialogContext, selected.toList()),
-              child: const Text('تأكيد'),
+              child: const Text('Confirm'),
             ),
           ],
         ),
@@ -771,7 +771,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${toRemove.length} صنف يتطلب رقم لوط اتشال من الفاتورة لعدم اختيار لوط له',
+            '${toRemove.length} item(s) requiring a batch were removed because no batch was selected',
           ),
         ),
       );
@@ -809,7 +809,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     if (priceList == null) {
       setState(
         () =>
-            line.priceStatus = _priceListStatus ?? 'لا توجد قائمة أسعار محددة',
+            line.priceStatus = _priceListStatus ?? 'No price list selected',
       );
       return;
     }
@@ -827,14 +827,14 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       if (prices.isEmpty) {
         setState(
           () => line.priceStatus =
-              'لا يوجد سعر مسجل لهذا الصنف في القائمة "$priceList"',
+              'No price is recorded for this item in "$priceList"',
         );
         return;
       }
       final rate = prices.first['price_list_rate'] as num?;
       if (rate == null) {
         setState(
-          () => line.priceStatus = 'سعر مسجل لهذا الصنف لكن قيمته فارغة',
+          () => line.priceStatus = 'A price is recorded for this item, but the value is empty',
         );
       } else {
         setState(() {
@@ -844,7 +844,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       }
     } catch (e) {
       if (mounted) {
-        setState(() => line.priceStatus = 'فشل الاتصال أثناء جلب السعر: $e');
+        setState(() => line.priceStatus = 'Could not connect while loading the price: $e');
       }
     }
   }
@@ -856,15 +856,15 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     if (!mounted) return;
     if (sellingWarehouses.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('لا يوجد مخزن سيارة مرتبط بالمندوب')),
+        const SnackBar(content: Text('No vehicle warehouse is linked to this representative')),
       );
       return;
     }
     setState(() => line.warehouse = sellingWarehouses.first);
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر المخزن',
-      hintText: 'ابحث باسم المخزن...',
+      title: 'Select Warehouse',
+      hintText: 'Search warehouses...',
       search: (query) async {
         final list = await CacheService.getSearchListCached(
           cacheDoctype: 'Warehouse_master',
@@ -909,8 +909,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   Future<void> _pickPriceList() async {
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر قائمة أسعار',
-      hintText: 'ابحث باسم القائمة...',
+      title: 'Select Price List',
+      hintText: 'Search price lists...',
       search: (query) async {
         final list = await CacheService.getSearchListCached(
           cacheDoctype: 'Price List_master',
@@ -966,8 +966,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   Future<void> _pickPaymentTerms() async {
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر شروط الدفع',
-      hintText: 'ابحث باسم القالب...',
+      title: 'Select Payment Terms',
+      hintText: 'Search templates...',
       search: (query) async {
         final list = await CacheService.getSearchListCached(
           cacheDoctype: 'Payment Terms Template_master',
@@ -1015,10 +1015,10 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         result.name,
       );
       if (template.isEmpty) {
-        _paymentScheduleStatus = 'تعذر جلب تفاصيل القالب من السيرفر';
+        _paymentScheduleStatus = 'Could not load template details from the server';
       } else if (!template.containsKey('terms')) {
         _paymentScheduleStatus =
-            'حقل تفاصيل الدفعات غير ظاهر لحسابك (على الأغلب محمي بصلاحية على السيرفر)';
+            'Payment schedule details are not available to your account. They may be restricted by server permissions.';
       } else {
         final terms = template['terms'];
         if (terms is List && terms.isNotEmpty) {
@@ -1028,11 +1028,11 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               .toList();
         } else {
           _paymentScheduleStatus =
-              'لا توجد صفوف دفعات مُهيكَلة مسجّلة في هذا القالب';
+              'This template has no structured payment schedule rows';
         }
       }
     } catch (e) {
-      _paymentScheduleStatus = 'فشل الاتصال أثناء جلب تفاصيل القالب: $e';
+      _paymentScheduleStatus = 'Could not connect while loading template details: $e';
     }
     if (mounted) setState(() => _loadingPaymentSchedule = false);
   }
@@ -1044,8 +1044,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   Future<void> _pickTermsTemplate() async {
     final result = await showSearchPicker(
       context: context,
-      title: 'اختر الشروط والأحكام',
-      hintText: 'ابحث باسم القالب...',
+      title: 'Select Terms and Conditions',
+      hintText: 'Search templates...',
       search: (query) async {
         final list = await CacheService.getSearchListCached(
           cacheDoctype: 'Terms and Conditions_master',
@@ -1176,18 +1176,18 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.card),
           ),
-          title: const Text('تخطي سقف الدين'),
+          title: const Text('Credit Limit Exceeded'),
           content: Text(
-            'سقف الدين المسموح: ${creditLimit.toStringAsFixed(0)} ج.م\n'
-            'مديونية العميل الحالية: ${currentOutstanding.toStringAsFixed(0)} ج.م\n'
-            'إجمالي هذه الفاتورة: ${grandTotal.toStringAsFixed(2)} ج.م\n'
-            'الإجمالي بعد الفاتورة: ${projected.toStringAsFixed(2)} ج.م\n\n'
-            'لا يمكن إصدار الفاتورة لأنها ستتجاوز سقف الدين المسموح لهذا العميل.',
+            'Credit limit: ${creditLimit.toStringAsFixed(0)} EGP\n'
+            'Current outstanding: ${currentOutstanding.toStringAsFixed(0)} EGP\n'
+            'Invoice total: ${grandTotal.toStringAsFixed(2)} EGP\n'
+            'Projected total: ${projected.toStringAsFixed(2)} EGP\n\n'
+            'This invoice cannot be submitted because it would exceed the customer’s credit limit.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('حسنًا'),
+              child: const Text('OK'),
             ),
           ],
         ),
@@ -1204,7 +1204,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   Future<String?> _captureLocationUrl() async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        _locationStatus = 'خدمة الموقع (GPS) مقفولة على الجهاز';
+        _locationStatus = 'Location services (GPS) are turned off';
         _locationFix = Geolocator.openLocationSettings;
         return null;
       }
@@ -1214,13 +1214,13 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         permission = await Geolocator.requestPermission();
       }
       if (permission == LocationPermission.denied) {
-        _locationStatus = 'تم رفض صلاحية الموقع';
+        _locationStatus = 'Location permission was denied';
         _locationFix = null;
         return null;
       }
       if (permission == LocationPermission.deniedForever) {
         _locationStatus =
-            'صلاحية الموقع مرفوضة نهائيًا — فعّلها من إعدادات التطبيق بالجهاز';
+            'Location permission is permanently denied. Enable it in app settings.';
         _locationFix = Geolocator.openAppSettings;
         return null;
       }
@@ -1233,11 +1233,11 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       );
 
       _locationStatus =
-          'تم تحديد الموقع (${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)})';
+          'Location captured (${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)})';
       _locationFix = null;
       return 'https://www.google.com/maps?q=${position.latitude},${position.longitude}';
     } catch (e) {
-      _locationStatus = 'خطأ أثناء تحديد الموقع: $e';
+      _locationStatus = 'Error capturing location: $e';
       _locationFix = null;
       return null;
     }
@@ -1262,10 +1262,10 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       final retry = Completer<void>();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_locationStatus ?? 'لازم تفعيل الموقع (GPS) عشان ترسل'),
+          content: Text(_locationStatus ?? 'Enable location (GPS) to submit'),
           duration: const Duration(seconds: 12),
           action: SnackBarAction(
-            label: 'أعد المحاولة',
+            label: 'Try Again',
             onPressed: () {
               if (!retry.isCompleted) retry.complete();
             },
@@ -1283,8 +1283,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   Future<void> _pickSourceDoc({required bool isOrder}) async {
     final result = await showSearchPicker(
       context: context,
-      title: isOrder ? 'اختر طلبية' : 'اختر فاتورة أصلية',
-      hintText: 'ابحث بالرقم أو اسم العميل...',
+      title: isOrder ? 'Select Order' : 'Select Original Invoice',
+      hintText: 'Search by number or customer name...',
       search: (query) async {
         final doctype = isOrder ? 'Sales Order' : 'Sales Invoice';
         // Orders: only approved ones that still have something left to
@@ -1323,8 +1323,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                 '${d['name']} — ${(d['customer_name'] as String?) ?? (d['customer'] as String?) ?? ''}',
             subtitle: remaining != null
                 ? (isOrder
-                      ? 'المتبقي للفوترة: ${remaining.toStringAsFixed(2)}'
-                      : 'الإجمالي: $remaining')
+                      ? 'Remaining to invoice: ${remaining.toStringAsFixed(2)}'
+                      : 'Total: $remaining')
                 : null,
           );
         }).toList();
@@ -1390,7 +1390,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     if (_customer == null || _lines.isEmpty) return false;
     final sellingWarehouses = await ErpService.getCurrentRepSellingWarehouses();
     if (sellingWarehouses.isEmpty) {
-      setState(() => _error = 'لا يوجد مخزن سيارة مرتبط بالمندوب');
+      setState(() => _error = 'No vehicle warehouse is linked to this representative');
       return false;
     }
     final sellingWarehouse = sellingWarehouses.first;
@@ -1412,7 +1412,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       if (available != null && entry.value > available) {
         setState(() {
           _error =
-              'الكمية المطلوبة من إحدى الدفعات أكبر من المتاح في مخزن السيارة';
+              'The requested quantity for a batch exceeds the quantity available in the vehicle warehouse';
         });
         return false;
       }
@@ -1420,7 +1420,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     for (final line in _lines.where((line) => line.hasSerialNo)) {
       if (line.serialNos.isEmpty || line.qty != line.serialNos.length) {
         setState(() {
-          _error = 'اختر رقم سيريال لكل وحدة من الصنف ${line.itemName}';
+          _error = 'Select a serial number for each unit of ${line.itemName}';
         });
         return false;
       }
@@ -1446,7 +1446,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       if (mounted && _locationStatus != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('الموقع: $_locationStatus'),
+            content: Text('Location: $_locationStatus'),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -1523,7 +1523,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('لا يوجد اتصال — سيُحفظ التعديل تلقائيًا'),
+              content: Text('Offline. Changes will be saved automatically.'),
             ),
           );
           Navigator.of(context).pop();
@@ -1545,7 +1545,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         setState(_resetInvoiceForm);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('لا يوجد اتصال — تم الحفظ وستُرسل الفاتورة تلقائيًا'),
+            content: Text('Offline. Invoice saved and will be sent automatically.'),
           ),
         );
         return true;
@@ -1580,7 +1580,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('تم حفظ الفاتورة بنجاح')));
+        ).showSnackBar(const SnackBar(content: Text('Invoice saved successfully')));
       }
       return true;
     } catch (e) {
@@ -1603,7 +1603,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('تعذر الاتصال — سيُحفظ التعديل تلقائيًا'),
+              content: Text('Connection unavailable. Changes will be saved automatically.'),
             ),
           );
           Navigator.of(context).pop();
@@ -1618,7 +1618,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         setState(_resetInvoiceForm);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('تعذر الاتصال — تم الحفظ وستُرسل الفاتورة تلقائيًا'),
+            content: Text('Connection unavailable. Invoice saved and will be sent automatically.'),
           ),
         );
         return true;
@@ -1666,7 +1666,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     return Scaffold(
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: Text(_isEditing ? 'تعديل الفاتورة' : 'فاتورة مبيعات'),
+        title: Text(_isEditing ? 'Edit Invoice' : 'Sales Invoice'),
         bottom: _isEditing
             ? null
             : TabBar(
@@ -1675,8 +1675,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                 unselectedLabelColor: AppColors.midGray,
                 indicatorColor: AppColors.accent,
                 tabs: const [
-                  Tab(text: 'إصدار فاتورة'),
-                  Tab(text: 'كل الفواتير'),
+                  Tab(text: 'New Invoice'),
+                  Tab(text: 'All Invoices'),
                 ],
               ),
       ),
@@ -1701,9 +1701,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                     ignoring: !_canSubmit,
                     child: SwipeToConfirmButton(
                       label: _isReturn
-                          ? 'اسحب لحفظ المرتجع'
-                          : 'اسحب لحفظ الفاتورة',
-                      confirmedLabel: 'تم الحفظ',
+                            ? 'Swipe to save return'
+                            : 'Swipe to save invoice',
+                          confirmedLabel: 'Saved',
                       onConfirmed: _submit,
                       wasQueued: () => _lastSubmitWasQueued,
                     ),
@@ -1730,10 +1730,10 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             OutlinedButton.icon(
               onPressed: () => _pickSourceDoc(isOrder: true),
               icon: const Icon(Icons.receipt_long_rounded, size: 16),
-              label: const Text('تحويل من طلبية'),
+              label: const Text('Create from Order'),
             ),
             FilterChip(
-              label: const Text('فاتورة مرتجع'),
+              label: const Text('Return Invoice'),
               selected: _isReturn,
               onSelected: (v) => setState(() => _isReturn = v),
               selectedColor: AppColors.accent.withValues(alpha: 0.15),
@@ -1747,7 +1747,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               OutlinedButton.icon(
                 onPressed: () => _pickSourceDoc(isOrder: false),
                 icon: const Icon(Icons.link_rounded, size: 16),
-                label: const Text('ربط بفاتورة أصلية '),
+                label: const Text('Link Original Invoice'),
               ),
           ],
         ),
@@ -1765,7 +1765,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  'مبني على: ${_sourceDoc!.name}',
+                  'Based on: ${_sourceDoc!.name}',
                   style: const TextStyle(
                     color: AppColors.midGray,
                     fontSize: 12,
@@ -1782,7 +1782,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                 TextButton(
                   onPressed: () => setState(() => _sourceDoc = null),
                   child: const Text(
-                    'إلغاء الربط',
+                    'Unlink',
                     style: TextStyle(fontSize: 12),
                   ),
                 ),
@@ -1798,14 +1798,14 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               borderRadius: BorderRadius.circular(AppRadius.card),
             ),
             child: const Text(
-              'وضع المرتجع مفعّل — الكميات هتترد فعليًا للمخزن، والفاتورة هتتسجل كإشعار دائن.',
+              'Return mode is enabled. Quantities will be returned to inventory and the invoice will be recorded as a credit note.',
               style: TextStyle(color: AppColors.accent, fontSize: 12),
             ),
           ),
         ],
         const SizedBox(height: 20),
         _pickerCard(
-          label: _customer?.label ?? 'اختر العميل',
+          label: _customer?.label ?? 'Select customer',
           icon: Icons.storefront_rounded,
           onTap: _pickCustomer,
           trailing: _loadingPartyDetails
@@ -1822,7 +1822,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(
-                'المنطقة: ${_customer!.subtitle}',
+                'Territory: ${_customer!.subtitle}',
                 style: const TextStyle(color: AppColors.midGray, fontSize: 12),
               ),
             ),
@@ -1832,8 +1832,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               _creditLimit != null
-                  ? 'سقف الدين: ${_creditLimit!.toStringAsFixed(0)} ج.م'
-                  : (_creditLimitStatus ?? 'سقف الدين غير متاح'),
+                  ? 'Credit limit: ${_creditLimit!.toStringAsFixed(0)} EGP'
+                  : (_creditLimitStatus ?? 'Credit limit unavailable'),
               style: const TextStyle(color: AppColors.midGray, fontSize: 12),
             ),
           ),
@@ -1842,8 +1842,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               _currentOutstanding != null
-                  ? 'المديونية الحالية: ${_currentOutstanding!.toStringAsFixed(0)} ج.م'
-                  : (_outstandingStatus ?? 'المديونية الحالية غير متاحة'),
+                  ? 'Current outstanding: ${_currentOutstanding!.toStringAsFixed(0)} EGP'
+                  : (_outstandingStatus ?? 'Current outstanding unavailable'),
               style: const TextStyle(color: AppColors.midGray, fontSize: 12),
             ),
           ),
@@ -1852,7 +1852,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: _priceList != null
                 ? Text(
-                    'قائمة الأسعار: $_priceList',
+                    'Price List: $_priceList',
                     style: const TextStyle(
                       color: AppColors.midGray,
                       fontSize: 12,
@@ -1862,7 +1862,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                     children: [
                       Expanded(
                         child: Text(
-                          _priceListStatus ?? 'قائمة الأسعار غير متاحة',
+                          _priceListStatus ?? 'Price list unavailable',
                           style: const TextStyle(
                             color: AppColors.midGray,
                             fontSize: 12,
@@ -1872,7 +1872,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                       TextButton(
                         onPressed: _pickPriceList,
                         child: const Text(
-                          'اختيار يدوي',
+                          'Manual selection',
                           style: TextStyle(fontSize: 12),
                         ),
                       ),
@@ -1882,14 +1882,14 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         ],
         const SizedBox(height: 20),
         const Text(
-          'رقم الفاتورة الورقية *',
+          'Paper Invoice Number *',
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _paperInvoiceNumberController,
           decoration: const InputDecoration(
-            hintText: 'رقم الفاتورة في الدفتر الورقي',
+            hintText: 'Invoice number from the paper log',
           ),
           onChanged: (_) => setState(() {}),
         ),
@@ -1898,13 +1898,13 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'الأصناف',
+              'Items',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
             ),
             TextButton.icon(
               onPressed: _addItem,
               icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('إضافة صنف'),
+              label: const Text('Add Item'),
             ),
           ],
         ),
@@ -1918,7 +1918,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             ),
             child: const Center(
               child: Text(
-                'لم تُضف أي أصناف بعد',
+                'No items added yet',
                 style: TextStyle(color: AppColors.midGray),
               ),
             ),
@@ -1999,8 +1999,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                   const SizedBox(height: 4),
                   Text(
                     line.unitPrice != null
-                        ? 'السعر: ${line.unitPrice} × ${line.qty.toStringAsFixed(0)} = ${(line.unitPrice! * line.qty).toStringAsFixed(2)} ج.م'
-                        : (line.priceStatus ?? 'السعر غير متاح'),
+                        ? 'Price: ${line.unitPrice} × ${line.qty.toStringAsFixed(0)} = ${(line.unitPrice! * line.qty).toStringAsFixed(2)} EGP'
+                        : (line.priceStatus ?? 'Price unavailable'),
                     style: const TextStyle(
                       color: AppColors.midGray,
                       fontSize: 11.5,
@@ -2030,7 +2030,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          line.warehouse ?? 'المخزن: افتراضي (تلقائي)',
+                          line.warehouse ?? 'Warehouse: Default (automatic)',
                           style: const TextStyle(
                             color: AppColors.accent,
                             fontSize: 11.5,
@@ -2052,8 +2052,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'لوط: ${line.batchNo}'
-                          '${line.batchExpiryDate != null ? ' • صلاحية حتى ${line.batchExpiryDate}' : ''}',
+                          'Batch: ${line.batchNo}'
+                          '${line.batchExpiryDate != null ? ' • Expires ${line.batchExpiryDate}' : ''}',
                           style: const TextStyle(
                             color: AppColors.midGray,
                             fontSize: 11.5,
@@ -2065,7 +2065,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                     TextButton.icon(
                       onPressed: () => _addAnotherBatch(line),
                       icon: const Icon(Icons.call_split_rounded, size: 15),
-                      label: const Text('إضافة دفعة أخرى لنفس الصنف'),
+                      label: const Text('Add another batch for this item'),
                     ),
                   ],
                   if (line.hasSerialNo) ...[
@@ -2077,7 +2077,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                         }
                       },
                       child: Text(
-                        'السيريال: ${line.serialNos.join('، ')}',
+                        'Serial numbers: ${line.serialNos.join(', ')}',
                         style: const TextStyle(
                           color: AppColors.accent,
                           fontSize: 11.5,
@@ -2096,33 +2096,33 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               grandTotal != null
-                  ? '${_isReturn ? 'إجمالي المرتجع التقديري' : 'الإجمالي التقديري'}: ${grandTotal.toStringAsFixed(2)} ج.م'
-                  : 'الإجمالي غير مكتمل (أسعار ناقصة)',
+                  ? '${_isReturn ? 'Estimated Return Total' : 'Estimated Total'}: ${grandTotal.toStringAsFixed(2)} EGP'
+                  : 'Total incomplete (missing prices)',
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
           ),
         ],
         const SizedBox(height: 24),
         const Text(
-          'تاريخ التسليم',
+          'Delivery Date',
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         _pickerCard(
           label: _deliveryDate != null
               ? _formatDate(_deliveryDate!)
-              : 'اختر تاريخ التسليم',
+              : 'Select delivery date',
           icon: Icons.event_rounded,
           onTap: _pickDeliveryDate,
         ),
         const SizedBox(height: 24),
         const Text(
-          'شروط الدفع',
+          'Payment Terms',
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         _pickerCard(
-          label: _paymentTerms?.label ?? 'اختر شروط الدفع ',
+          label: _paymentTerms?.label ?? 'Select payment terms',
           icon: Icons.receipt_long_rounded,
           onTap: _pickPaymentTerms,
           trailing: _loadingPaymentSchedule
@@ -2145,7 +2145,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'معاينة الدفعات (تقديرية)',
+                  'Payment Schedule Preview (Estimated)',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
                 ),
                 const SizedBox(height: 8),
@@ -2164,7 +2164,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                       children: [
                         Expanded(
                           child: Text(
-                            'استحقاق ${_formatDate(dueDate)} — ${portion ?? '—'}%'
+                            'Due ${_formatDate(dueDate)} — ${portion ?? '—'}%'
                             '${description != null && description.isNotEmpty ? ' — $description' : ''}',
                             style: const TextStyle(
                               color: AppColors.midGray,
@@ -2174,7 +2174,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                         ),
                         if (amount != null)
                           Text(
-                            '${amount.toStringAsFixed(2)} ج.م',
+                            '${amount.toStringAsFixed(2)} EGP',
                             style: const TextStyle(
                               color: AppColors.black,
                               fontSize: 12,
@@ -2201,12 +2201,12 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         ],
         const SizedBox(height: 24),
         const Text(
-          'الشروط والأحكام / ملاحظات',
+          'Terms and Conditions / Notes',
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         _pickerCard(
-          label: _termsTemplate?.label ?? 'اختر قالبًا ',
+          label: _termsTemplate?.label ?? 'Select a template',
           icon: Icons.description_rounded,
           onTap: _pickTermsTemplate,
           trailing: _loadingTermsText
@@ -2223,7 +2223,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           minLines: 3,
           maxLines: 8,
           decoration: const InputDecoration(
-            hintText: 'اكتب ملاحظاتك هنا يدويًا، أو عدّل النص بعد اختيار قالب',
+            hintText: 'Enter notes here or edit the text after selecting a template',
           ),
         ),
         if (_error != null) _errorRow(),
@@ -2278,7 +2278,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                 ),
               ),
               ?trailing,
-              const Icon(Icons.chevron_left_rounded, color: AppColors.midGray),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.midGray),
             ],
           ),
         ),

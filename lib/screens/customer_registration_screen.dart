@@ -18,9 +18,9 @@ import 'document_detail_screen.dart';
 
 const _customerTypes = ['Individual', 'Company', 'Partnership'];
 const _customerTypeLabels = {
-  'Individual': 'فرد',
-  'Company': 'شركة',
-  'Partnership': 'شراكة',
+  'Individual': 'Individual',
+  'Company': 'Company',
+  'Partnership': 'Partnership',
 };
 
 /// Formats a locally-entered Egyptian mobile number (`01xxxxxxxxx`) into the
@@ -188,7 +188,7 @@ class _CustomerRegistrationScreenState
   Future<String?> _captureLocationGeoJson() async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        _locationStatus = 'خدمة الموقع (GPS) مقفولة على الجهاز';
+        _locationStatus = 'Location services (GPS) are turned off';
         _locationFix = Geolocator.openLocationSettings;
         return null;
       }
@@ -198,13 +198,13 @@ class _CustomerRegistrationScreenState
         permission = await Geolocator.requestPermission();
       }
       if (permission == LocationPermission.denied) {
-        _locationStatus = 'تم رفض صلاحية الموقع';
+        _locationStatus = 'Location permission was denied';
         _locationFix = null;
         return null;
       }
       if (permission == LocationPermission.deniedForever) {
         _locationStatus =
-            'صلاحية الموقع مرفوضة نهائيًا — فعّلها من إعدادات التطبيق بالجهاز';
+            'Location permission is permanently denied. Enable it in app settings.';
         _locationFix = Geolocator.openAppSettings;
         return null;
       }
@@ -217,7 +217,7 @@ class _CustomerRegistrationScreenState
       );
 
       _locationStatus =
-          'تم تحديد الموقع (${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)})';
+          'Location captured (${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)})';
       _locationFix = null;
       return jsonEncode({
         'type': 'FeatureCollection',
@@ -233,7 +233,7 @@ class _CustomerRegistrationScreenState
         ],
       });
     } catch (e) {
-      _locationStatus = 'خطأ أثناء تحديد الموقع: $e';
+      _locationStatus = 'Error capturing location: $e';
       _locationFix = null;
       return null;
     }
@@ -256,7 +256,7 @@ class _CustomerRegistrationScreenState
         content: Text(_locationStatus ?? ''),
         action: fix == null
             ? null
-            : SnackBarAction(label: 'فتح الإعدادات', onPressed: () => fix()),
+            : SnackBarAction(label: 'Open settings', onPressed: () => fix()),
         duration: const Duration(seconds: 4),
       ),
     );
@@ -287,7 +287,7 @@ class _CustomerRegistrationScreenState
               const Padding(
                 padding: EdgeInsets.all(16),
                 child: Text(
-                  'اختر المنطقة',
+                  'Select Territory',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                 ),
               ),
@@ -389,7 +389,7 @@ class _CustomerRegistrationScreenState
       if (mounted && _capturedLocationGeoJson == null && _locationStatus != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('الموقع: $_locationStatus'),
+            content: Text('Location: $_locationStatus'),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -446,7 +446,7 @@ class _CustomerRegistrationScreenState
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('لا يوجد اتصال — سيُحفظ التعديل تلقائيًا'),
+              content: Text('Offline. Changes will be saved automatically.'),
             ),
           );
           Navigator.of(context).pop();
@@ -493,7 +493,7 @@ class _CustomerRegistrationScreenState
         if (!mounted) return true;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('لا يوجد اتصال — تم حفظ العميل وسيُرسل تلقائيًا'),
+            content: Text('Offline. Customer saved and will be sent automatically.'),
           ),
         );
         return true;
@@ -524,7 +524,7 @@ class _CustomerRegistrationScreenState
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('تم تسجيل العميل بنجاح')));
+        ).showSnackBar(const SnackBar(content: Text('Customer registered successfully')));
       }
       return true;
     } catch (e) {
@@ -545,7 +545,7 @@ class _CustomerRegistrationScreenState
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('تعذر الاتصال — سيُحفظ التعديل تلقائيًا'),
+              content: Text('Connection unavailable. Changes will be saved automatically.'),
             ),
           );
           Navigator.of(context).pop();
@@ -559,7 +559,7 @@ class _CustomerRegistrationScreenState
         if (!mounted) return true;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('تعذر الاتصال — تم حفظ العميل وسيُرسل تلقائيًا'),
+            content: Text('Connection unavailable. Customer saved and will be sent automatically.'),
           ),
         );
         return true;
@@ -578,7 +578,7 @@ class _CustomerRegistrationScreenState
     return Scaffold(
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: Text(_isEditing ? 'تعديل بيانات العميل' : 'تسجيل عميل جديد'),
+        title: Text(_isEditing ? 'Edit Customer' : 'Register Customer'),
       ),
       body: SafeArea(
         child: Column(
@@ -587,26 +587,26 @@ class _CustomerRegistrationScreenState
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  _label('اسم العميل'),
+                  _label('Customer Name'),
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
-                      hintText: 'اسم العميل / المحل',
+                      hintText: 'Customer or business name',
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 16),
-                  _label('نوع العميل'),
+                  _label('Customer Type'),
                   _buildCustomerTypeSelector(),
                   const SizedBox(height: 16),
-                  _label('الرقم القومي'),
+                  _label('National ID'),
                   TextFormField(
                     controller: _nationalIdController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(hintText: 'الرقم القومي للعميل المكون من 14 رقم'),
+                    decoration: const InputDecoration(hintText: 'Enter the customer’s 14-digit national ID'),
                   ),
                   const SizedBox(height: 16),
-                  _label('رقم الموبايل'),
+                  _label('Mobile Number'),
                   TextFormField(
                     controller: _phone1Controller,
                     keyboardType: TextInputType.phone,
@@ -614,22 +614,22 @@ class _CustomerRegistrationScreenState
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 16),
-                  _label('رقم موبايل آخر '),
+                  _label('Alternative Mobile Number'),
                   TextFormField(
                     controller: _phone2Controller,
                     keyboardType: TextInputType.phone,
                     decoration: const InputDecoration(hintText: '01xxxxxxxxx'),
                   ),
                   const SizedBox(height: 16),
-                  _label('العنوان '),
+                  _label('Address'),
                   TextFormField(
                     controller: _addressController,
                     decoration: const InputDecoration(
-                      hintText: 'العنوان بالتفصيل',
+                      hintText: 'Full address',
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _label('الموقع'),
+                  _label('Location'),
                   Material(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(AppRadius.field),
@@ -660,8 +660,8 @@ class _CustomerRegistrationScreenState
                             Expanded(
                               child: Text(
                                 _capturedLocationGeoJson != null
-                                    ? (_locationStatus ?? 'تم تحديد الموقع')
-                                    : 'تسجيل الموقع',
+                                    ? (_locationStatus ?? 'Location captured')
+                                    : 'Capture Location',
                                 style: TextStyle(
                                   color: _capturedLocationGeoJson != null
                                       ? AppColors.black
@@ -677,17 +677,17 @@ class _CustomerRegistrationScreenState
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _label('الضمانات'),
+                  _label('Guarantees'),
                   TextFormField(
                     controller: _guaranteesController,
                     maxLines: 3,
                     decoration: const InputDecoration(
-                      hintText: 'تفاصيل الضمانات...',
+                      hintText: 'Guarantee details...',
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 16),
-                  _label('سقف الدين المقترح '),
+                  _label('Proposed Credit Limit'),
                   TextFormField(
                     controller: _creditLimitController,
                     keyboardType: const TextInputType.numberWithOptions(
@@ -696,57 +696,57 @@ class _CustomerRegistrationScreenState
                     decoration: const InputDecoration(hintText: '0.00'),
                   ),
                   const SizedBox(height: 16),
-                  _label('المجموعة '),
+                  _label('Customer Group'),
                   _buildPickerField(
                     label: _customerGroup?.label,
-                    hint: 'اختر مجموعة العميل',
+                    hint: 'Select customer group',
                     onTap: () => _pickLink(
                       doctype: 'Customer Group',
                       searchField: 'name',
-                      title: 'اختر مجموعة العميل',
+                      title: 'Select Customer Group',
                       onPicked: (r) => setState(() => _customerGroup = r),
                     ),
                   ),
                   if (_customerType == 'Individual') ...[
                     const SizedBox(height: 16),
-                    _label('النوع '),
+                    _label('Gender'),
                     _buildPickerField(
                       label: _gender?.label,
-                      hint: 'اختر النوع',
+                      hint: 'Select gender',
                       onTap: () => _pickLink(
                         doctype: 'Gender',
                         searchField: 'name',
-                        title: 'اختر النوع',
+                        title: 'Select Gender',
                         onPicked: (r) => setState(() => _gender = r),
                       ),
                     ),
                   ],
                   const SizedBox(height: 16),
-                  _label('قائمة الأسعار '),
+                  _label('Price List'),
                   _buildPickerField(
                     label: _priceList?.label,
-                    hint: 'اختر قائمة الأسعار',
+                    hint: 'Select price list',
                     onTap: () => _pickLink(
                       doctype: 'Price List',
                       searchField: 'name',
-                      title: 'اختر قائمة الأسعار',
+                      title: 'Select Price List',
                       onPicked: (r) => setState(() => _priceList = r),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _label('شروط الدفع '),
+                  _label('Payment Terms'),
                   _buildPickerField(
                     label: _paymentTerms?.label,
-                    hint: 'اختر شروط الدفع',
+                    hint: 'Select payment terms',
                     onTap: () => _pickLink(
                       doctype: 'Payment Terms Template',
                       searchField: 'name',
-                      title: 'اختر شروط الدفع',
+                      title: 'Select Payment Terms',
                       onPicked: (r) => setState(() => _paymentTerms = r),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _label('المنطقة'),
+                  _label('Territory'),
                   if (_resolvingTerritory)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
@@ -758,7 +758,7 @@ class _CustomerRegistrationScreenState
                     )
                   else if (_territoryChoices.isEmpty)
                     Text(
-                      _territory ?? 'سيتم تحديدها لاحقًا',
+                      _territory ?? 'To be assigned later',
                       style: const TextStyle(
                         color: AppColors.midGray,
                         fontSize: 13,
@@ -767,7 +767,7 @@ class _CustomerRegistrationScreenState
                   else
                     _buildPickerField(
                       label: _territory,
-                      hint: 'اختر المنطقة',
+                      hint: 'Select territory',
                       onTap: _pickTerritory,
                     ),
                   if (_error != null) ...[
@@ -785,9 +785,9 @@ class _CustomerRegistrationScreenState
                   ignoring: !_canSubmit,
                   child: SwipeToConfirmButton(
                     label: _isEditing
-                        ? 'اسحب لحفظ التعديلات'
-                        : 'اسحب لتسجيل العميل',
-                    confirmedLabel: 'تم الحفظ',
+                        ? 'Swipe to save changes'
+                        : 'Swipe to register customer',
+                      confirmedLabel: 'Saved',
                     onConfirmed: _submit,
                     wasQueued: () => _lastSubmitWasQueued,
                   ),
@@ -825,7 +825,7 @@ class _CustomerRegistrationScreenState
                   ),
                 ),
               ),
-              const Icon(Icons.chevron_left_rounded, color: AppColors.midGray),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.midGray),
             ],
           ),
         ),

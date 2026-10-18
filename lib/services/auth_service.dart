@@ -134,7 +134,7 @@ class AuthService {
       final refreshToken = payload['refresh_token'] as String?;
 
       if (accessToken == null || refreshToken == null) {
-        throw const AuthException('تعذر إتمام تسجيل الدخول، حاول مرة أخرى.');
+        throw const AuthException('Unable to complete sign-in. Please try again.');
       }
 
       final nextScope = '$baseUrl|${username.trim().toLowerCase()}';
@@ -158,7 +158,7 @@ class AuthService {
       throw _mapDioException(e);
     } on TimeoutException {
       throw const AuthException(
-        'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
+        'The connection timed out. Check your network and try again.',
       );
     }
   }
@@ -171,7 +171,7 @@ class AuthService {
     final refreshToken = await _store.read(_refreshTokenKey);
 
     if (domain == null || refreshToken == null) {
-      throw const AuthException('لا توجد جلسة محفوظة.', serverRejected: true);
+      throw const AuthException('No saved session was found.', serverRejected: true);
     }
 
     final dio = _client(domain);
@@ -195,7 +195,7 @@ class AuthService {
 
       if (newAccessToken == null) {
         throw const AuthException(
-          'انتهت صلاحية الجلسة، برجاء تسجيل الدخول مرة أخرى.',
+          'Your session expired. Please sign in again.',
           serverRejected: true,
         );
       }
@@ -211,7 +211,7 @@ class AuthService {
       throw _mapDioException(e);
     } on TimeoutException {
       throw const AuthException(
-        'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
+        'The connection timed out. Check your network and try again.',
       );
     }
   }
@@ -227,7 +227,7 @@ class AuthService {
     final accessToken = await _store.read(_accessTokenKey);
 
     if (domain == null || accessToken == null) {
-      throw const AuthException('لا توجد جلسة محفوظة.', serverRejected: true);
+      throw const AuthException('No saved session was found.', serverRejected: true);
     }
 
     final dio = _client(domain);
@@ -263,7 +263,7 @@ class AuthService {
         } catch (_) {}
       }
       throw const AuthException(
-        'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
+        'The connection timed out. Check your network and try again.',
       );
     }
   }
@@ -425,7 +425,7 @@ class AuthService {
       if (excType == 'PermissionError' ||
           exception.contains('PermissionError')) {
         return const AuthException(
-          'حسابك غير مصرح له باستخدام تطبيق الموبايل حاليًا. تواصل مع الإدارة.',
+          'Your account is not currently authorized to use the mobile app. Contact your administrator.',
           serverRejected: true,
           accessRestricted: true,
         );
@@ -434,14 +434,14 @@ class AuthService {
 
     if (response.statusCode == 401 || response.statusCode == 403) {
       return const AuthException(
-        'بيانات الدخول غير صحيحة.',
+        'Incorrect username or password.',
         serverRejected: true,
       );
     }
 
     if (response.statusCode == 429) {
       return const AuthException(
-        'تم إيقاف محاولات الدخول مؤقتًا لكثرة المحاولات. انتظر قليلًا ثم حاول مرة أخرى.',
+        'Sign-in is temporarily locked after too many attempts. Wait a while, then try again.',
         serverRejected: true,
       );
     }
@@ -455,12 +455,12 @@ class AuthService {
 
     if ((response.statusCode ?? 0) >= 500) {
       return const AuthException(
-        'خدمة تسجيل الدخول غير متاحة مؤقتًا على السيرفر. حاول بعد دقائق.',
+        'Sign-in is temporarily unavailable. Please try again in a few minutes.',
       );
     }
 
     return const AuthException(
-      'حدث خطأ غير متوقع، حاول مرة أخرى لاحقًا.',
+      'An unexpected error occurred. Please try again later.',
       serverRejected: true,
     );
   }
@@ -475,7 +475,7 @@ class AuthService {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
         return const AuthException(
-          'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
+          'The connection timed out. Check your network and try again.',
         );
       case DioExceptionType.connectionError:
         final detail = '${e.message ?? ''} ${e.error ?? ''}'.toLowerCase();
@@ -483,19 +483,19 @@ class AuthService {
             detail.contains('name or service not known') ||
             detail.contains('nodename nor servname')) {
           return const AuthException(
-            'تعذر العثور على عنوان السيرفر (DNS). بدّل الشبكة أو أعد المحاولة.',
+            'The server address could not be found (DNS). Switch networks or try again.',
           );
         }
         if (detail.contains('certificate') || detail.contains('handshake')) {
           return const AuthException(
-            'تعذر تأمين الاتصال بالسيرفر. تأكد من تاريخ الهاتف وشهادة HTTPS.',
+            'A secure connection to the server could not be established. Check your device date and the HTTPS certificate.',
           );
         }
         return const AuthException(
-          'تعذر الاتصال بالسيرفر. تأكد من الدومين والإنترنت أو جرب شبكة أخرى.',
+          'Could not connect to the server. Check the address and your internet connection, or try another network.',
         );
       default:
-        return const AuthException('حدث خطأ غير متوقع، حاول مرة أخرى لاحقًا.');
+        return const AuthException('An unexpected error occurred. Please try again later.');
     }
   }
 }

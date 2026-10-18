@@ -29,16 +29,16 @@ Future<void> promptLogVisit(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
       ),
-      title: const Text('تسجيل زيارة'),
-      content: const Text('هل تريد تسجيل زيارة لهذا العميل؟'),
+      title: const Text('Log visit'),
+      content: const Text('Would you like to log a visit for this customer?'),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('لا'),
+          child: const Text('No'),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('نعم'),
+          child: const Text('Yes'),
         ),
       ],
     ),
@@ -52,21 +52,21 @@ Future<void> promptLogVisit(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
       ),
-      title: const Text('ملاحظات الزيارة'),
+      title: const Text('Visit notes'),
       content: TextFormField(
         controller: notesController,
         maxLines: 3,
         autofocus: true,
-        decoration: const InputDecoration(hintText: 'ملاحظات (اختياري)...'),
+        decoration: const InputDecoration(hintText: 'Notes (optional)...'),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('إلغاء'),
+          child: const Text('Cancel'),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('حفظ'),
+          child: const Text('Save'),
         ),
       ],
     ),
@@ -111,8 +111,8 @@ Future<void> promptLogVisit(
         SnackBar(
           content: Text(
             queued
-                ? 'تم حفظ الزيارة وستُرسل تلقائيًا عند عودة الاتصال'
-                : 'تم تسجيل الزيارة بنجاح',
+                ? 'Visit saved and will be sent when you are back online'
+                : 'Visit logged successfully',
           ),
         ),
       );
@@ -126,7 +126,7 @@ Future<void> promptLogVisit(
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('تعذر الاتصال — تم حفظ الزيارة وستُرسل تلقائيًا'),
+            content: Text('Connection unavailable. Visit saved and will be sent automatically.'),
           ),
         );
       }
@@ -135,7 +135,7 @@ Future<void> promptLogVisit(
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('تعذر تسجيل الزيارة، لكن المستند اتحفظ بنجاح'),
+          content: Text('Could not log the visit, but the document was saved successfully.'),
         ),
       );
     }
@@ -149,18 +149,18 @@ Future<void> _showLocationRequired(BuildContext context) async {
   final openSettings = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('الموقع مطلوب'),
+      title: const Text('Location required'),
       content: const Text(
-        'لا يمكن تسجيل زيارة بدون الموقع. شغّل GPS وامنح Red ERP صلاحية الموقع ثم حاول مرة أخرى.',
+        'A location is required to log a visit. Turn on GPS and grant Red ERP location permission, then try again.',
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('إلغاء'),
+          child: const Text('Cancel'),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('فتح الإعدادات'),
+          child: const Text('Open settings'),
         ),
       ],
     ),

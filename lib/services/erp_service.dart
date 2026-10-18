@@ -72,11 +72,11 @@ class ErpService {
         value == true || value == 1 || value?.toString() == '1';
     final disabled = enabledFlag(row['disabled']);
     final frozen = enabledFlag(row['is_frozen']);
-    if (disabled && frozen) return 'معطل ومجمد';
-    if (disabled) return 'معطل';
-    if (frozen) return 'مجمد';
+    if (disabled && frozen) return 'Disabled and frozen';
+    if (disabled) return 'Disabled';
+    if (frozen) return 'Frozen';
     if (!row.containsKey('disabled') || !row.containsKey('is_frozen')) {
-      return 'الحالة غير محدثة';
+      return 'Status is out of date';
     }
     return '';
   }
@@ -109,7 +109,7 @@ class ErpService {
 
     if (domain == null || token == null) {
       throw const ErpException(
-        'لا توجد جلسة محفوظة.',
+        'No saved session was found.',
         serverRejected: true,
         sessionExpired: true,
       );
@@ -153,7 +153,7 @@ class ErpService {
       response = e.response!;
     } on TimeoutException {
       throw const ErpException(
-        'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
+        'The connection timed out. Check your network and try again.',
       );
     }
 
@@ -162,7 +162,7 @@ class ErpService {
         await AuthService.refreshSession();
       } on AuthException {
         throw const ErpException(
-          'انتهت صلاحية الجلسة، برجاء تسجيل الدخول مرة أخرى.',
+          'Your session expired. Please sign in again.',
           serverRejected: true,
           sessionExpired: true,
         );
@@ -694,7 +694,7 @@ class ErpService {
     }
 
     if (territories.isEmpty && hadConnectivityFailure) {
-      throw const ErpException('تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت');
+      throw const ErpException('Could not determine your territories. Check your internet connection.');
     }
 
     return territories.toList();
@@ -1190,7 +1190,7 @@ class ErpService {
     final token = await AuthService.currentAccessToken();
     if (domain == null || token == null) {
       throw const ErpException(
-        'لا توجد جلسة محفوظة.',
+        'No saved session was found.',
         serverRejected: true,
         sessionExpired: true,
       );
@@ -1227,7 +1227,7 @@ class ErpService {
       throw _mapDioException(e);
     } on TimeoutException {
       throw const ErpException(
-        'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
+        'The connection timed out. Check your network and try again.',
       );
     }
 
@@ -1239,7 +1239,7 @@ class ErpService {
         await AuthService.refreshSession();
       } on AuthException {
         throw const ErpException(
-          'انتهت صلاحية الجلسة، برجاء تسجيل الدخول مرة أخرى.',
+          'Your session expired. Please sign in again.',
           serverRejected: true,
           sessionExpired: true,
         );
@@ -1356,7 +1356,7 @@ class ErpService {
       if (excType == 'PermissionError' ||
           exception.contains('PermissionError')) {
         return const ErpException(
-          'ليس لديك صلاحية لتنفيذ هذا الإجراء.',
+          'You are not authorized to perform this action.',
           serverRejected: true,
         );
       }
@@ -1371,14 +1371,14 @@ class ErpService {
 
     if (response.statusCode == 401 || response.statusCode == 403) {
       return const ErpException(
-        'انتهت صلاحية الجلسة أو ليس لديك صلاحية كافية.',
+        'Your session expired or you do not have sufficient permissions.',
         serverRejected: true,
         sessionExpired: true,
       );
     }
 
     return const ErpException(
-      'حدث خطأ غير متوقع أثناء الاتصال بالسيرفر، حاول مرة أخرى.',
+      'An unexpected error occurred while contacting the server. Please try again.',
       serverRejected: true,
     );
   }
@@ -1393,14 +1393,14 @@ class ErpService {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
         return const ErpException(
-          'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
+          'The connection timed out. Check your network and try again.',
         );
       case DioExceptionType.connectionError:
         return const ErpException(
-          'تعذر الاتصال بالسيرفر، تأكد من اتصالك بالإنترنت.',
+          'Could not connect to the server. Check your internet connection.',
         );
       default:
-        return const ErpException('حدث خطأ غير متوقع، حاول مرة أخرى لاحقًا.');
+        return const ErpException('An unexpected error occurred. Please try again later.');
     }
   }
 }

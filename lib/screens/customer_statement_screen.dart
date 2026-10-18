@@ -179,13 +179,13 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
       if (!mounted) return;
       await Printing.sharePdf(
         bytes: bytes,
-        filename: 'كشف حساب - ${widget.customerLabel}.pdf',
+        filename: 'account-statement-${widget.customerLabel}.pdf',
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('تعذر إنشاء ملف PDF: $e')));
+      ).showSnackBar(SnackBar(content: Text('Could not create PDF: $e')));
     } finally {
       if (mounted) setState(() => _exportingPdf = false);
     }
@@ -196,7 +196,7 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: Text('كشف حساب — ${widget.customerLabel}'),
+        title: Text('Account Statement — ${widget.customerLabel}'),
         actions: [
           if (_rows.isNotEmpty)
             IconButton(
@@ -208,7 +208,7 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.picture_as_pdf_rounded),
-              tooltip: 'تصدير PDF',
+              tooltip: 'Export PDF',
             ),
         ],
       ),
@@ -237,7 +237,7 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
     if (_rows.isEmpty) {
       return const Center(
         child: Text(
-          'لا توجد حركات مالية مسجلة لهذا العميل',
+          'No financial transactions recorded for this customer',
           style: TextStyle(color: AppColors.midGray),
         ),
       );
@@ -265,12 +265,12 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'المديونية الحالية',
+                'Current Outstanding',
                 style: TextStyle(color: AppColors.midGray, fontSize: 12.5),
               ),
               const SizedBox(height: 6),
               Text(
-                '${currentBalance.toStringAsFixed(2)} ج.م',
+                '${currentBalance.toStringAsFixed(2)} EGP',
                 style: const TextStyle(
                   color: AppColors.white,
                   fontSize: 22,
@@ -336,7 +336,7 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
               ),
             const SizedBox(height: 2),
             Text(
-              'الرصيد: ${row.balance.toStringAsFixed(2)}',
+              'Balance: ${row.balance.toStringAsFixed(2)} EGP',
               style: const TextStyle(color: AppColors.midGray, fontSize: 11),
             ),
           ],
@@ -390,7 +390,7 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
     final doc = _detailCache[key];
     if (!_detailCache.containsKey(key) || doc == null) {
       return const Text(
-        'تعذر تحميل تفاصيل هذا المستند',
+        'Could not load this document’s details',
         style: TextStyle(color: AppColors.midGray, fontSize: 12),
       );
     }
@@ -432,7 +432,7 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
           if (doc['grand_total'] != null) ...[
             const SizedBox(height: 6),
             Text(
-              'الإجمالي: ${doc['grand_total']}',
+              'Total: ${doc['grand_total']} EGP',
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
             ),
           ],
@@ -453,20 +453,20 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
         const SizedBox(height: 8),
         if (!hasPaymentInfo)
           const Text(
-            'لا تفاصيل إضافية لهذا المستند',
+            'No additional details for this document',
             style: TextStyle(color: AppColors.midGray, fontSize: 12),
           )
         else ...[
           if (paidAmount != null)
-            Text('المبلغ: $paidAmount', style: const TextStyle(fontSize: 12.5)),
+            Text('Amount: $paidAmount EGP', style: const TextStyle(fontSize: 12.5)),
           if (modeOfPayment != null)
             Text(
-              'طريقة الدفع: $modeOfPayment',
+              'Payment Method: $modeOfPayment',
               style: const TextStyle(color: AppColors.midGray, fontSize: 11.5),
             ),
           if (account != null)
             Text(
-              'الحساب: $account',
+              'Account: $account',
               style: const TextStyle(color: AppColors.midGray, fontSize: 11.5),
             ),
         ],

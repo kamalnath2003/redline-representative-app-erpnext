@@ -24,53 +24,53 @@ class _QuickAction {
 const _quickActions = [
   _QuickAction(
     Icons.add_shopping_cart_rounded,
-    'طلبية مبيعات',
+    'Sales Order',
     route: '/sales-order',
   ),
   _QuickAction(
     Icons.receipt_long_rounded,
-    'إصدار فاتورة',
+    'Create Invoice',
     route: '/sales-invoice',
   ),
   _QuickAction(
     Icons.payments_rounded,
-    'تحصيل من عميل',
+    'Collect Payment',
     route: '/payment-entry',
   ),
-  _QuickAction(Icons.groups_rounded, 'إدارة العملاء', route: '/customers'),
+  _QuickAction(Icons.groups_rounded, 'Customers', route: '/customers'),
   _QuickAction(
     Icons.event_note_rounded,
-    'فواتير المستحقات',
+    'Outstanding Invoices',
     route: '/due-invoices',
   ),
   _QuickAction(
     Icons.add_location_alt_rounded,
-    'تسجيل زيارة',
+    'Log Visit',
     route: '/customer-visits',
   ),
-  _QuickAction(Icons.note_alt_rounded, 'المذكرات', route: '/issues'),
+  _QuickAction(Icons.note_alt_rounded, 'Issues', route: '/issues'),
   _QuickAction(
     Icons.person_add_rounded,
-    'تسجيل عميل جديد',
+    'Register Customer',
     route: '/customer-registration',
   ),
   _QuickAction(
     Icons.local_shipping_rounded,
-    'طلب مواد',
+    'Material Request',
     route: '/material-request',
   ),
-  _QuickAction(Icons.wallet_rounded, 'تسجيل مصروف', route: '/expenses'),
+  _QuickAction(Icons.wallet_rounded, 'Log Expense', route: '/expenses'),
   _QuickAction(
     Icons.account_balance_wallet_rounded,
-    'الخزنة',
+    'Cash Account',
     route: '/treasury',
   ),
   _QuickAction(
     Icons.fact_check_rounded,
-    'بانتظار موافقتي',
+    'Pending Approvals',
     route: '/pending-approvals',
   ),
-  _QuickAction(Icons.history_rounded, 'حركة المخزون', route: '/stock-movement'),
+  _QuickAction(Icons.history_rounded, 'Stock Movement', route: '/stock-movement'),
 ];
 
 /// Shown instead of [_quickActions] for a `WF - Region Manager` — full
@@ -80,7 +80,7 @@ const _quickActions = [
 /// subset assuming managers only approve/oversee; the business explicitly
 /// wants managers able to do everything a rep can do, not just review it.
 const _managerQuickActions = [
-  _QuickAction(Icons.groups_rounded, 'لوحة فريقي', route: '/team-dashboard'),
+  _QuickAction(Icons.groups_rounded, 'Team Dashboard', route: '/team-dashboard'),
   ..._quickActions,
 ];
 
@@ -118,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Default text stays if `/me` fails or doesn't return a usable name —
   // this is cosmetic, not a blocking failure. Response shape is unconfirmed,
   // see docs/API_INTEGRATION_NOTES.md.
-  String _displayName = 'أهلًا،  ...';
+  String _displayName = 'Welcome...';
 
   List<_Activity> _activities = [];
   bool _loadingActivities = true;
@@ -220,21 +220,21 @@ class _HomeScreenState extends State<HomeScreen> {
       _fetchActivitySource(
         doctype: 'Sales Invoice',
         icon: Icons.receipt_long_rounded,
-        title: 'فاتورة جديدة',
+        title: 'New Invoice',
         subtitleFields: const ['customer_name', 'customer'],
         amountField: 'grand_total',
       ),
       _fetchActivitySource(
         doctype: 'Payment Entry',
         icon: Icons.payments_rounded,
-        title: 'تحصيل من عميل',
+        title: 'Collect Payment',
         subtitleFields: const ['party_name', 'party'],
         amountField: 'paid_amount',
       ),
       _fetchActivitySource(
         doctype: 'Sales Order',
         icon: Icons.local_shipping_rounded,
-        title: 'طلبية جديدة',
+        title: 'New Sales Order',
         subtitleFields: const ['customer_name', 'customer'],
         amountField: 'grand_total',
       ),
@@ -283,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: icon,
           title: title,
           subtitle: subtitle,
-          amount: amount != null ? '$amount ج.م' : '—',
+          amount: amount != null ? '$amount EGP' : '—',
           creation: DateTime.tryParse((d['creation'] as String?) ?? ''),
         );
       }).toList();
@@ -295,10 +295,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String _relativeTime(DateTime? time) {
     if (time == null) return '';
     final diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 1) return 'الآن';
-    if (diff.inMinutes < 60) return 'منذ ${diff.inMinutes} دقيقة';
-    if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعة';
-    if (diff.inDays < 7) return 'منذ ${diff.inDays} يوم';
+    if (diff.inMinutes < 1) return 'Now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${time.year}-${time.month.toString().padLeft(2, '0')}-${time.day.toString().padLeft(2, '0')}';
   }
 
@@ -331,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted || fullName == null) return;
       final name = fullName.toString().trim();
       if (name.isEmpty) return;
-      setState(() => _displayName = 'أهلًا، $name');
+      setState(() => _displayName = 'Welcome, $name');
     } catch (_) {
       // Silent — cosmetic only, see comment above.
     }
@@ -349,7 +349,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showComingSoon() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('هذه الشاشة قيد التطوير حاليًا')),
+      const SnackBar(content: Text('This screen is currently under development')),
     );
   }
 
@@ -369,7 +369,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
             _buildTreasurySection(),
             const SizedBox(height: 24),
-            _buildSectionTitle('إجراءات سريعة'),
+            _buildSectionTitle('Quick Actions'),
             const SizedBox(height: 12),
             _resolvingRole
                 ? const SizedBox(
@@ -388,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildPerformanceCard(),
             ],
             const SizedBox(height: 24),
-            _buildSectionTitle('آخر النشاطات'),
+            _buildSectionTitle('Recent Activity'),
             const SizedBox(height: 12),
             _buildRecentActivities(),
           ],
@@ -414,23 +414,23 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_rounded),
-            label: 'الرئيسية',
+            label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt_long_rounded),
-            label: 'الطلبيات',
+            label: 'Orders',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_balance_wallet_rounded),
-            label: 'الخزنة',
+            label: 'Cash Account',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications_rounded),
-            label: 'الإشعارات',
+            label: 'Notifications',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_rounded),
-            label: 'الحساب',
+            label: 'Account',
           ),
         ],
       ),
@@ -473,8 +473,8 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(width: 4),
         Semantics(
           label: _unreadNotifications > 0
-              ? 'الإشعارات، $_unreadNotifications غير مقروءة'
-              : 'الإشعارات',
+              ? 'Notifications, $_unreadNotifications unread'
+              : 'Notifications',
           button: true,
           child: Material(
             color: AppColors.white,
@@ -566,7 +566,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(width: 12),
             Expanded(
               child: Text(
-                'لا توجد خزائن مرتبطة بحسابك حاليًا',
+                'No cash accounts are currently linked to your account',
                 style: TextStyle(color: AppColors.midGray, fontSize: 12.5),
               ),
             ),
@@ -774,13 +774,13 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'أدائي هذا الشهر',
+            'My Performance This Month',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
           ),
           const SizedBox(height: 10),
           if (target == null) ...[
             Text(
-              'لا يوجد هدف محدد لهذا الشهر — المحقق: ${achieved.toStringAsFixed(0)} ج.م',
+              'No target set for this month — achieved: ${achieved.toStringAsFixed(0)} EGP',
               style: const TextStyle(color: AppColors.midGray, fontSize: 12.5),
             ),
           ] else ...[
@@ -788,14 +788,14 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${achieved.toStringAsFixed(0)} ج.م',
+                  '${achieved.toStringAsFixed(0)} EGP',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
                   ),
                 ),
                 Text(
-                  'الهدف: ${target.toStringAsFixed(0)} ج.م',
+                  'Target: ${target.toStringAsFixed(0)} EGP',
                   style: const TextStyle(
                     color: AppColors.midGray,
                     fontSize: 12,
@@ -847,7 +847,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: const Center(
           child: Text(
-            'لا توجد نشاطات حديثة',
+            'No recent activity',
             style: TextStyle(color: AppColors.midGray),
           ),
         ),

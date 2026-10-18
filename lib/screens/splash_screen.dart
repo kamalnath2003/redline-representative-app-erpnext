@@ -121,7 +121,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Transform.scale(
                     scale: 0.9 + 0.1 * textOpacity,
                     child: const Text(
-                      'مرحباً',
+                      'Welcome',
                       style: TextStyle(
                         color: AppColors.white,
                         fontSize: 40,

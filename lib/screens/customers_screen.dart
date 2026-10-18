@@ -78,7 +78,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت وحاول مرة أخرى';
+        _error = 'Could not determine your territories. Check your internet connection and try again.';
       });
       return;
     }
@@ -200,7 +200,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'فلترة حسب المنطقة',
+                      'Filter by Territory',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
@@ -231,7 +231,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                           child: OutlinedButton(
                             onPressed: () =>
                                 setSheetState(() => localSelection.clear()),
-                            child: const Text('مسح الفلتر'),
+                            child: const Text('Clear filter'),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -239,7 +239,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                           child: FilledButton(
                             onPressed: () =>
                                 Navigator.of(context).pop(localSelection),
-                            child: const Text('تطبيق'),
+                            child: const Text('Apply'),
                           ),
                         ),
                       ],
@@ -321,14 +321,14 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('سقف الدين: ${limit.toStringAsFixed(2)} ج.م'),
+                          Text('Credit limit: ${limit.toStringAsFixed(2)} EGP'),
                           Text(
-                            'المديونية: ${outstanding.toStringAsFixed(2)} ج.م',
+                            'Outstanding: ${outstanding.toStringAsFixed(2)} EGP',
                           ),
                           Text(
                             available >= 0
-                                ? 'المتاح: ${available.toStringAsFixed(2)} ج.م'
-                                : 'تجاوز السقف: ${(-available).toStringAsFixed(2)} ج.م',
+                                ? 'Available: ${available.toStringAsFixed(2)} EGP'
+                                : 'Over limit: ${(-available).toStringAsFixed(2)} EGP',
                             style: TextStyle(
                               color: available >= 0
                                   ? AppColors.success
@@ -348,7 +348,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                     Icons.storefront_rounded,
                     color: AppColors.accent,
                   ),
-                  title: const Text('زيارة عميل'),
+                  title: const Text('Log Visit'),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
                     context.push('/customer-visits');
@@ -360,7 +360,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                     Icons.receipt_long_outlined,
                     color: AppColors.accent,
                   ),
-                  title: const Text('كشف حساب'),
+                  title: const Text('Account Statement'),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
                     context.push(
@@ -375,7 +375,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                     Icons.badge_outlined,
                     color: AppColors.accent,
                   ),
-                  title: const Text('تفاصيل / تعديل العميل'),
+                  title: const Text('Customer Details / Edit'),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
                     context.push(
@@ -396,7 +396,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: const Text('إدارة العملاء'),
+        title: const Text('Customers'),
         actions: [
           if (_availableTerritories.length > 1)
             IconButton(
@@ -419,7 +419,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 controller: _controller,
                 onChanged: _onChanged,
                 decoration: const InputDecoration(
-                  hintText: 'ابحث باسم العميل...',
+                  hintText: 'Search customers...',
                   prefixIcon: Icon(Icons.search_rounded),
                 ),
               ),
@@ -478,7 +478,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
             padding: EdgeInsets.only(top: 80),
             child: Center(
               child: Text(
-                'لا يوجد عملاء',
+                'No customers found',
                 style: TextStyle(color: AppColors.midGray),
               ),
             ),
@@ -543,7 +543,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                           if (isDisabled) ...[
                             const SizedBox(height: 2),
                             const Text(
-                              'العميل معطل / مجمد',
+                              'Customer is disabled or frozen',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -571,7 +571,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       RowSyncIcon(fromCache: _fromCache),
                       const SizedBox(width: 6),
                       const Icon(
-                        Icons.chevron_left_rounded,
+                        Icons.chevron_right_rounded,
                         color: AppColors.midGray,
                         size: 20,
                       ),

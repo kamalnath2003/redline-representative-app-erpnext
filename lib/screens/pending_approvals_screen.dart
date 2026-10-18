@@ -33,23 +33,23 @@ class _DoctypeConfig {
 }
 
 const _doctypeConfigs = <String, _DoctypeConfig>{
-  'Customer': _DoctypeConfig('عميل', ['customer_name'], null),
-  'Sales Order': _DoctypeConfig('طلبية مبيعات', [
+  'Customer': _DoctypeConfig('Customer', ['customer_name'], null),
+  'Sales Order': _DoctypeConfig('Sales Order', [
     'customer_name',
     'customer',
   ], 'grand_total'),
-  'Sales Invoice': _DoctypeConfig('فاتورة مبيعات', [
+  'Sales Invoice': _DoctypeConfig('Sales Invoice', [
     'customer_name',
     'customer',
   ], 'grand_total'),
-  'Payment Entry': _DoctypeConfig('تحصيل', [
+  'Payment Entry': _DoctypeConfig('Payment Collection', [
     'party_name',
     'party',
   ], 'paid_amount'),
-  'Material Request': _DoctypeConfig('طلب مواد', [], null),
-  'Stock Entry': _DoctypeConfig('حركة مخزون', [], null),
-  'Expense Claim': _DoctypeConfig('مصروف', [], null),
-  'Vehicle Log': _DoctypeConfig('صيانة/وقود سيارة', [], null),
+  'Material Request': _DoctypeConfig('Material Request', [], null),
+  'Stock Entry': _DoctypeConfig('Stock Movement', [], null),
+  'Expense Claim': _DoctypeConfig('Expense Claim', [], null),
+  'Vehicle Log': _DoctypeConfig('Vehicle Maintenance/Fuel', [], null),
 };
 
 /// Generic "pending my approval" browser: pick a DocType → pick one of its
@@ -108,12 +108,12 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
       setState(() {
         _states = parsed;
         if (parsed.isEmpty) {
-          _error = 'لا يوجد Workflow نشط لهذا النوع من المستندات على السيرفر';
+          _error = 'No active workflow is configured for this document type on the server';
         }
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'تعذر جلب حالات الاعتماد: $e');
+      setState(() => _error = 'Could not load approval statuses: $e');
     } finally {
       if (mounted) setState(() => _loadingStates = false);
     }
@@ -165,7 +165,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
         _results = result.rows;
         _fromCache = result.fromCache;
         if (result.rows.isEmpty) {
-          _error = 'لا توجد مستندات بهذه الحالة حاليًا';
+          _error = 'There are no documents in this status';
         }
       });
     } catch (e) {
@@ -174,7 +174,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
         setState(() => _loadingResults = false);
         return;
       }
-      setState(() => _error = 'تعذر جلب المستندات: $e');
+      setState(() => _error = 'Could not load documents: $e');
     } finally {
       if (mounted) setState(() => _loadingResults = false);
     }
@@ -199,19 +199,19 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
-        title: const Text('موافقة جماعية'),
+        title: const Text('Bulk Approval'),
         content: Text(
-          'هل أنت متأكد من الموافقة على ${_selectedNames.length} مستند؟',
+          'Approve ${_selectedNames.length} selected documents?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text(
-              'تأكيد',
+              'Confirm',
               style: TextStyle(
                 color: AppColors.accent,
                 fontWeight: FontWeight.w700,
@@ -267,7 +267,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('تم: $succeeded — تجاهل: $skipped — فشل: $failed'),
+        content: Text('Approved: $succeeded — Skipped: $skipped — Failed: $failed'),
       ),
     );
     final state = _selectedState;
@@ -278,7 +278,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      appBar: AppBar(title: const Text('بانتظار موافقتي')),
+      appBar: AppBar(title: const Text('Pending Approvals')),
       body: SafeArea(
         child: RefreshIndicator(
           color: AppColors.accent,
@@ -291,7 +291,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               const Text(
-                'نوع المستند',
+                'Document Type',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 10),
@@ -321,7 +321,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
               ] else if (_states.isNotEmpty) ...[
                 const SizedBox(height: 24),
                 const Text(
-                  'الحالة',
+                  'Status',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 10),
@@ -388,7 +388,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                                 : Icons.check_box_outline_blank_rounded,
                             size: 18,
                           ),
-                          label: Text('تحديد الكل (${_results.length})'),
+                          label: Text('Select all (${_results.length})'),
                         ),
                         const Spacer(),
                         if (_selectedNames.isNotEmpty)
@@ -406,8 +406,8 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                                 : const Icon(Icons.done_all_rounded, size: 16),
                             label: Text(
                               _bulkApproving
-                                  ? 'جاري التنفيذ...'
-                                  : 'موافقة على المحدد (${_selectedNames.length})',
+                                  ? 'Processing...'
+                                  : 'Approve selected (${_selectedNames.length})',
                             ),
                           ),
                       ],
@@ -493,7 +493,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                               const SizedBox(width: 6),
                               RowSyncIcon(fromCache: _fromCache),
                               const Icon(
-                                Icons.chevron_left_rounded,
+                                Icons.chevron_right_rounded,
                                 color: AppColors.midGray,
                               ),
                             ],

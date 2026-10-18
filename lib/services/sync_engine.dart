@@ -130,7 +130,7 @@ class SyncEngine {
     } catch (e) {
       final message = e is ErpException
           ? e.message
-          : 'حدث خطأ غير متوقع أثناء إعادة الإرسال';
+          : 'An unexpected error occurred while retrying the upload';
       await (_db.update(_db.syncJobs)..where((t) => t.id.equals(job.id))).write(
         SyncJobsCompanion(
           status: Value(SyncJobStatus.failed.name),
@@ -183,7 +183,7 @@ class SyncEngine {
       case 'genericApiCall':
         return _replayGenericApiCall(payload);
       default:
-        throw ErpException('نوع عملية غير معروف: ${job.jobType}');
+        throw ErpException('Unknown job type: ${job.jobType}');
     }
   }
 
@@ -341,7 +341,7 @@ class SyncEngine {
         );
         return _ReplayResult(doctype, name);
       default:
-        throw ErpException('عملية غير معروفة: $operation');
+        throw ErpException('Unknown operation: $operation');
     }
   }
 
@@ -446,7 +446,7 @@ class SyncEngine {
     final employee = await ErpService.resolveCurrentEmployee();
     if (employee == null) {
       throw const ErpException(
-        'تعذر تحديد بيانات الموظف المرتبطة بحسابك — راجع الإدارة',
+        'Could not find the employee record linked to your account. Contact your administrator.',
       );
     }
     final body = <String, dynamic>{
@@ -487,7 +487,7 @@ class SyncEngine {
     final employee = await ErpService.resolveCurrentEmployee();
     if (employee == null) {
       throw const ErpException(
-        'تعذر تحديد بيانات الموظف المرتبطة بحسابك — راجع الإدارة',
+        'Could not find the employee record linked to your account. Contact your administrator.',
       );
     }
 

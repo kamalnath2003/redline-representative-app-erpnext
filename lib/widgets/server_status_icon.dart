@@ -27,8 +27,8 @@ class ServerStatusIcon extends StatelessWidget {
         final pending = status.pendingCount;
         return Semantics(
           label: online
-              ? (pending > 0 ? 'متصل بالسيرفر، $pending عملية بانتظار الإرسال' : 'متصل بالسيرفر')
-              : 'غير متصل بالسيرفر',
+              ? (pending > 0 ? 'Connected to server, $pending items pending' : 'Connected to server')
+              : 'Not connected to server',
           button: true,
           child: Material(
             color: AppColors.white,

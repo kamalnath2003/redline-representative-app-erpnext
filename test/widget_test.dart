@@ -1,5 +1,5 @@
 // Basic smoke test: the app boots into the Splash screen and its intro
-// animation morphs from the logo into the "مرحباً" greeting.
+// animation morphs from the logo into the "Welcome" greeting.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +20,7 @@ void main() {
     await tester.pumpWidget(const RedErpApp());
 
     expect(find.byType(AppLogo), findsOneWidget);
-    expect(find.text('مرحباً'), findsOneWidget);
+    expect(find.text('Welcome'), findsOneWidget);
 
     // Run the intro animation and the post-delay navigation check to
     // completion so no timer/controller is left pending at teardown.

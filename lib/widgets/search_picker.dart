@@ -43,7 +43,7 @@ Future<PickedRecord?> showSearchPicker({
   required BuildContext context,
   required String title,
   required Future<List<PickedRecord>> Function(String query) search,
-  String hintText = 'ابحث بالاسم...',
+  String hintText = 'Search by name...',
   List<Widget> Function(BuildContext context, VoidCallback refresh)?
   actionsBuilder,
 }) {
@@ -196,7 +196,7 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
     if (_results.isEmpty) {
       return const Center(
         child: Text(
-          'لا توجد نتائج',
+          'No results found',
           style: TextStyle(color: AppColors.midGray),
         ),
       );

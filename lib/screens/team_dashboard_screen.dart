@@ -77,7 +77,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       if (territories.isEmpty) {
         setState(() {
           _loading = false;
-          _error = 'لا توجد مناطق مرتبطة بحسابك';
+          _error = 'No territories are linked to your account';
         });
         return;
       }
@@ -130,7 +130,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       if (userIds.isEmpty) {
         setState(() {
           _loading = false;
-          _error = 'لا يوجد مندوبين مرتبطين بمناطقك حتى الآن';
+          _error = 'No sales representatives are linked to your territories yet';
         });
         return;
       }
@@ -228,7 +228,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       final message = handleErpError(context, e);
       setState(() {
         _loading = false;
-        _error = message ?? 'تعذر تحميل بيانات الفريق';
+        _error = message ?? 'Could not load team data';
       });
     }
   }
@@ -401,7 +401,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      appBar: AppBar(title: const Text('لوحة فريقي')),
+      appBar: AppBar(title: const Text('Team Dashboard')),
       body: SafeArea(
         child: _loading
             ? const LoadingIndicator()
@@ -428,7 +428,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'المندوبين',
+                          'Sales Representatives',
                           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                         ),
                       ],
@@ -446,11 +446,11 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
 
   Widget _buildSortSelector() {
     const options = [
-      (_SortMetric.sales, 'الأعلى مبيعات'),
-      (_SortMetric.collections, 'الأعلى تحصيل'),
-      (_SortMetric.expenses, 'الأقل مصروفات'),
-      (_SortMetric.debt, 'الأقل مديونية'),
-      (_SortMetric.visits, 'الأكثر زيارات'),
+      (_SortMetric.sales, 'Highest Sales'),
+      (_SortMetric.collections, 'Highest Collections'),
+      (_SortMetric.expenses, 'Lowest Expenses'),
+      (_SortMetric.debt, 'Lowest Outstanding'),
+      (_SortMetric.visits, 'Most Visits'),
     ];
     return SizedBox(
       height: 34,
@@ -490,12 +490,12 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'مبيعات المنطقة هذا الشهر',
+                  'Territory Sales This Month',
                   style: TextStyle(color: AppColors.midGray, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_regionAchieved.toStringAsFixed(0)} ج.م',
+                  '${_regionAchieved.toStringAsFixed(0)} EGP',
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                 ),
               ],
@@ -508,12 +508,12 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'مصروفات المنطقة هذا الشهر',
+                  'Territory Expenses This Month',
                   style: TextStyle(color: AppColors.midGray, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_regionExpenses.toStringAsFixed(0)} ج.م',
+                  '${_regionExpenses.toStringAsFixed(0)} EGP',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
@@ -557,7 +557,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${rep.inFlightCount} قيد التنفيذ',
+                    '${rep.inFlightCount} in progress',
                     style: const TextStyle(fontSize: 10.5, color: AppColors.midGray),
                   ),
                 ),
@@ -566,8 +566,8 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
           const SizedBox(height: 8),
           Text(
             target != null
-                ? '${rep.achieved.toStringAsFixed(0)} / ${target.toStringAsFixed(0)} ج.م'
-                : '${rep.achieved.toStringAsFixed(0)} ج.م (لا يوجد هدف محدد)',
+                ? '${rep.achieved.toStringAsFixed(0)} / ${target.toStringAsFixed(0)} EGP'
+                : '${rep.achieved.toStringAsFixed(0)} EGP (no target set)',
             style: const TextStyle(color: AppColors.midGray, fontSize: 12),
           ),
           if (target != null && target > 0) ...[
@@ -589,15 +589,15 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
             children: [
               Expanded(
                 child: _kpiTile(
-                  'تحصيل الشهر',
-                  '${rep.collections.toStringAsFixed(0)} ج.م',
+                  'Monthly Collections',
+                  '${rep.collections.toStringAsFixed(0)} EGP',
                   AppColors.success,
                 ),
               ),
               Expanded(
                 child: _kpiTile(
-                  'مصروفات الشهر',
-                  '${rep.expenses.toStringAsFixed(0)} ج.م',
+                  'Monthly Expenses',
+                  '${rep.expenses.toStringAsFixed(0)} EGP',
                   AppColors.accent,
                 ),
               ),
@@ -608,14 +608,14 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
             children: [
               Expanded(
                 child: _kpiTile(
-                  'مديونية عملائه',
-                  '${rep.debt.toStringAsFixed(0)} ج.م',
+                  'Customer Outstanding',
+                  '${rep.debt.toStringAsFixed(0)} EGP',
                   AppColors.black,
                 ),
               ),
               Expanded(
                 child: _kpiTile(
-                  'زيارات الشهر',
+                  'Monthly Visits',
                   '${rep.visitCount}',
                   AppColors.black,
                 ),

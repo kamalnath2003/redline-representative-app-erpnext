@@ -23,11 +23,11 @@ import '../theme/app_theme.dart';
   final docstatus = doc['docstatus'];
   switch (docstatus) {
     case 1:
-      return (label: 'مُرسل', color: AppColors.success);
+      return (label: 'Submitted', color: AppColors.success);
     case 2:
-      return (label: 'ملغي', color: AppColors.accent);
+      return (label: 'Cancelled', color: AppColors.accent);
     default:
-      return (label: 'مسودة', color: AppColors.midGray);
+      return (label: 'Draft', color: AppColors.midGray);
   }
 }
 
@@ -52,16 +52,16 @@ import '../theme/app_theme.dart';
   final status = (doc['status'] as String?) ?? '';
   final lower = status.toLowerCase();
   if (lower.contains('overdue')) {
-    return (label: 'متأخرة السداد', color: AppColors.accent);
+    return (label: 'Overdue', color: AppColors.accent);
   }
   if (lower == 'paid') {
-    return (label: 'مسددة بالكامل', color: AppColors.success);
+    return (label: 'Paid in full', color: AppColors.success);
   }
   if (lower.contains('partly paid') || lower.contains('partially paid')) {
-    return (label: 'مسددة جزئيًا', color: Colors.orange);
+    return (label: 'Partially paid', color: Colors.orange);
   }
   if (lower.contains('unpaid')) {
-    return (label: 'غير مسددة', color: AppColors.midGray);
+    return (label: 'Unpaid', color: AppColors.midGray);
   }
   if (lower.contains('return') || lower.contains('credit note')) {
     return (label: status, color: AppColors.midGray);
