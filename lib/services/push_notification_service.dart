@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
-import '../firebase_options.dart';
+// import '../firebase_options.dart';
 import '../main.dart' show openDocumentFromNotification;
 import 'auth_service.dart';
 import 'erp_service.dart';
@@ -31,7 +31,7 @@ class PushNotificationService {
     try {
       if (!_initialized) {
         await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
+          // options: DefaultFirebaseOptions.currentPlatform,
         );
         _initialized = true;
       }

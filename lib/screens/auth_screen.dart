@@ -179,7 +179,10 @@ class _AuthScreenState extends State<AuthScreen> {
         _isLoading = false;
         _errorText = e.message;
       });
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint(
+        'Unexpected login failure (${error.runtimeType})\n$stackTrace',
+      );
       if (!mounted) return;
       setState(() {
         _isLoading = false;

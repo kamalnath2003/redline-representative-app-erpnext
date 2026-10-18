@@ -103,9 +103,7 @@ class AuthService {
     while (domain.endsWith('/')) {
       domain = domain.substring(0, domain.length - 1);
     }
-    if (domain.startsWith('http://')) {
-      domain = 'https://${domain.substring('http://'.length)}';
-    } else if (!domain.startsWith('https://')) {
+    if (!domain.startsWith('http://') && !domain.startsWith('https://')) {
       domain = 'https://$domain';
     }
     return domain;
