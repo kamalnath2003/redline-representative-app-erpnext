@@ -8,7 +8,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
   static const _sections = <(String, String)>[
     (
         'Data handled by the app',
-        'RedLine handles your sign-in details, the ERP server you choose, and '
+        'RCD Sales handles your sign-in details, the ERP server you choose, and '
           'authorized business data such as customers, orders, invoices, and '
           'collections. Session tokens are stored securely on your device. A '
           'local copy of data needed for offline work may also be stored.',

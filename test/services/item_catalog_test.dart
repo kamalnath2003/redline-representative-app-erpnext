@@ -70,6 +70,13 @@ void main() {
     );
     expect(
       ItemImageService.isImageAttachment({
+        'file_type': 'Image',
+        'file_name': 'item.img',
+      }),
+      isTrue,
+    );
+    expect(
+      ItemImageService.isImageAttachment({
         'content_type': 'application/pdf',
         'file_name': 'specification.pdf',
       }),

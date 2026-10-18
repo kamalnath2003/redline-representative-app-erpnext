@@ -48,8 +48,8 @@ class CalendarService {
       // an account calendar is created. Create an app-owned local calendar
       // once so reminders still work without requiring a Google account.
       final created = await _plugin.createCalendar(
-        'Red ERP - Due dates',
-        localAccountName: 'Red ERP',
+        'RCD Sales - Due dates',
+        localAccountName: 'RCD Sales',
       );
       if (created.data != null && created.data!.isNotEmpty) {
         return created.data;
@@ -86,7 +86,7 @@ class CalendarService {
       _ensureTimezone();
       final calendarId = await _resolveWritableCalendarId();
       if (calendarId == null) {
-        lastError ??= 'Could not create the Red ERP calendar. Make sure calendar permission is granted.';
+        lastError ??= 'Could not create the RCD Sales calendar. Make sure calendar permission is granted.';
         return false;
       }
 

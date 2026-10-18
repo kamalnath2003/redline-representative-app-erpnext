@@ -1,10 +1,10 @@
-# RedLine
+# RCD Sales
 
 Mobile field-sales application for sales representatives, built with Flutter and integrated directly with an ERPNext/Frappe backend. Developed by Red Tech For Technology.
 
 ## Overview
 
-RedLine is the mobile extension of an ERPNext deployment for a field sales team. It lets representatives create and manage sales documents, collect payments, register and visit customers, submit expenses, and track approvals from their phones — with full offline support for the operations that don't require a live server round trip. The interface is Arabic (RTL) throughout, built for field use in the MENA region.
+RCD Sales is the mobile extension of an ERPNext deployment for a field sales team. It lets representatives create and manage sales documents, collect payments, register and visit customers, submit expenses, browse an offline item catalog, and track approvals from their phones — with offline support for operations that do not require a live server round trip. The interface is English and left-to-right, built for field use.
 
 ## Features
 

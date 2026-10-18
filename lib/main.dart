@@ -226,7 +226,7 @@ class _RedErpAppState extends State<RedErpApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Red ERP',
+      title: 'RCD Sales',
       locale: const Locale('en'),
       supportedLocales: const [Locale('en')],
       debugShowCheckedModeBanner: false,

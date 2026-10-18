@@ -101,10 +101,10 @@ class _SplashScreenState extends State<SplashScreen>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        AppLogo(size: 96, color: AppColors.white),
+                        AppLogo(size: 96),
                         SizedBox(height: 16),
                         Text(
-                          'REDLINE',
+                          'RCD SALES',
                           style: TextStyle(
                             color: AppColors.white,
                             fontSize: 22,

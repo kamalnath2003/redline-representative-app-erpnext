@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Central color palette for Red ERP. Change values here to re-theme the app.
+/// Central color palette for RCD Sales. Change values here to re-theme the app.
 class AppColors {
   AppColors._();
 

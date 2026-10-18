@@ -229,7 +229,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: const Center(
-                        child: AppLogo(size: 38, color: AppColors.white),
+                        child: AppLogo(size: 38),
                       ),
                     ),
                   ),

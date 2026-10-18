@@ -151,7 +151,7 @@ Future<void> _showLocationRequired(BuildContext context) async {
     builder: (context) => AlertDialog(
       title: const Text('Location required'),
       content: const Text(
-        'A location is required to log a visit. Turn on GPS and grant Red ERP location permission, then try again.',
+        'A location is required to log a visit. Turn on GPS and grant RCD Sales location permission, then try again.',
       ),
       actions: [
         TextButton(

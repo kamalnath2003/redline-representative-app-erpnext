@@ -44,6 +44,8 @@ class ItemImageService {
   static bool isImageAttachment(Map<String, dynamic> row) {
     final contentType = row['content_type']?.toString().toLowerCase() ?? '';
     if (contentType.startsWith('image/')) return true;
+    final fileType = row['file_type']?.toString().toLowerCase() ?? '';
+    if (fileType == 'image' || fileType.startsWith('image/')) return true;
     final fileUrl = row['file_url']?.toString() ?? '';
     final fileName = row['file_name']?.toString() ?? '';
     final extension = p
@@ -77,23 +79,46 @@ class ItemImageService {
         cacheDoctype: 'Item_image_attachments',
         cacheKey: itemCode,
         fetch: () async {
-          final files = await ErpService.getList(
-            'File',
-            filters: [
-              ['attached_to_doctype', '=', 'Item'],
-              ['attached_to_name', '=', itemCode],
-            ],
-            fields: const [
-              'name',
-              'file_name',
-              'file_url',
-              'content_type',
-              'is_private',
-            ],
-            orderBy: 'creation desc',
-            limit: 500,
-          );
-          final images = files.where(isImageAttachment).toList();
+          final filesByName = <String, Map<String, dynamic>>{};
+          try {
+            final attachments = await ErpService.callMethodList(
+              '/api/method/frappe.desk.form.load.get_attachments',
+              params: {'doctype': 'Item', 'name': itemCode},
+            );
+            for (final attachment in attachments.whereType<Map>()) {
+              final row = Map<String, dynamic>.from(attachment);
+              final key = row['name']?.toString() ?? row['file_url']?.toString();
+              if (key != null && key.isNotEmpty) filesByName[key] = row;
+            }
+          } catch (_) {}
+
+          try {
+            final files = await ErpService.getList(
+              'File',
+              filters: [
+                ['attached_to_doctype', '=', 'Item'],
+                ['attached_to_name', '=', itemCode],
+              ],
+              fields: const [
+                'name',
+                'file_name',
+                'file_url',
+                'file_type',
+                'is_private',
+                'attached_to_field',
+              ],
+              orderBy: 'creation desc',
+              limit: 500,
+            );
+            for (final row in files) {
+              final key = row['name']?.toString() ?? row['file_url']?.toString();
+              if (key != null && key.isNotEmpty) filesByName[key] = row;
+            }
+          } catch (_) {
+            if (filesByName.isEmpty) rethrow;
+          }
+
+          final images = filesByName.values.where(isImageAttachment).toList();
           if (primaryImageUrl != null && primaryImageUrl.trim().isNotEmpty) {
             final normalizedPrimary = primaryImageUrl.trim();
             final alreadyIncluded = images.any(
