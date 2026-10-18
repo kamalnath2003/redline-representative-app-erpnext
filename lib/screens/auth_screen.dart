@@ -59,6 +59,12 @@ class _AuthScreenState extends State<AuthScreen> {
     if (domain != null && mounted) {
       _domainController.text = domain;
     }
+    final username = await AuthService.savedUsername();
+    final password = await AuthService.savedPassword();
+    if (mounted) {
+      if (username != null) _usernameController.text = username;
+      if (password != null) _passwordController.text = password;
+    }
 
     final hasSession = await AuthService.hasStoredSession();
     if (!hasSession) return;
@@ -69,7 +75,8 @@ class _AuthScreenState extends State<AuthScreen> {
     bool supported = false;
     try {
       final auth = LocalAuthentication();
-      supported = (await auth.canCheckBiometrics) || (await auth.isDeviceSupported());
+      supported =
+          (await auth.canCheckBiometrics) || (await auth.isDeviceSupported());
     } catch (_) {
       supported = false;
     }
@@ -106,7 +113,14 @@ class _AuthScreenState extends State<AuthScreen> {
       try {
         await AuthService.refreshSession();
       } on AuthException catch (e) {
-        if (e.serverRejected) rethrow;
+        if (e.serverRejected) {
+          try {
+            await AuthService.reloginWithSavedCredentials();
+          } on AuthException {
+            await AuthService.clearSession();
+            rethrow;
+          }
+        }
       }
       unawaited(PushNotificationService.registerForCurrentUser());
       if (!mounted) return;
@@ -133,7 +147,8 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
       setState(() {
         _biometricBusy = false;
-        _errorText = 'Could not verify your biometrics. Try again or sign in manually.';
+        _errorText =
+            'Could not verify your biometrics. Try again or sign in manually.';
       });
     }
   }
@@ -194,7 +209,9 @@ class _AuthScreenState extends State<AuthScreen> {
   void _handleForgotPassword() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('This feature is currently unavailable. Contact support.'),
+        content: Text(
+          'This feature is currently unavailable. Contact support.',
+        ),
       ),
     );
   }
@@ -228,9 +245,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const Center(
-                        child: AppLogo(size: 38),
-                      ),
+                      child: const Center(child: AppLogo(size: 38)),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -258,7 +273,10 @@ class _AuthScreenState extends State<AuthScreen> {
                           padding: EdgeInsets.symmetric(horizontal: 10),
                           child: Text(
                             'Or sign in manually',
-                            style: TextStyle(color: AppColors.midGray, fontSize: 12),
+                            style: TextStyle(
+                              color: AppColors.midGray,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                         Expanded(child: Divider()),
@@ -337,9 +355,8 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ),
                     ),
-                    validator: (v) => (v == null || v.isEmpty)
-                        ? 'Enter your password'
-                        : null,
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Enter your password' : null,
                   ),
                   if (_errorText != null) ...[
                     const SizedBox(height: 12),
@@ -423,7 +440,10 @@ class _AuthScreenState extends State<AuthScreen> {
                           color: AppColors.white,
                         ),
                       )
-                    : const Icon(Icons.fingerprint_rounded, color: AppColors.white),
+                    : const Icon(
+                        Icons.fingerprint_rounded,
+                        color: AppColors.white,
+                      ),
               ),
               const SizedBox(width: 14),
               const Expanded(
@@ -432,7 +452,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   children: [
                     Text(
                       'Sign in with biometrics',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
                     ),
                     SizedBox(height: 2),
                     Text(

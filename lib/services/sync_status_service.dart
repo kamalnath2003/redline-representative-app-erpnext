@@ -152,7 +152,12 @@ class SyncStatusService extends ChangeNotifier {
   /// Forces an immediate reachability check — used on app resume, a manual
   /// "sync now" tap, and internally on connectivity/timer triggers.
   Future<bool> checkNow() async {
-    if (_checking) return _isOnline;
+    if (_checking) {
+      while (_checking) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+      return _isOnline;
+    }
     _checking = true;
     notifyListeners();
     try {

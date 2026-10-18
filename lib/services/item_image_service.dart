@@ -58,6 +58,24 @@ class ItemImageService {
         _imageExtensions.contains(urlExtension);
   }
 
+  static Future<void> prefetchCatalogImages() async {
+    if (!SyncStatusService().isOnline) return;
+    final cached = await CacheService.readCached('Item_master', 'master');
+    if (cached == null) return;
+    for (final item in cached.rows) {
+      if (!SyncStatusService().isOnline) return;
+      final code = item['name']?.toString();
+      if (code == null || code.isEmpty) continue;
+      final image = item['image']?.toString();
+      try {
+        await syncItemImages(
+          itemCode: code,
+          primaryImageUrl: image == null || image.isEmpty ? null : image,
+        );
+      } catch (_) {}
+    }
+  }
+
   static Future<String?> localOrDownloadPrimaryImage({
     required String itemCode,
     required String imageUrl,
@@ -68,6 +86,20 @@ class ItemImageService {
     fileUrl: imageUrl,
     contentType: '',
   );
+
+  static Future<String?> cachedPrimaryImagePath({
+    required String itemCode,
+    required String imageUrl,
+  }) async {
+    final fileName = p.basename(Uri.tryParse(imageUrl)?.path ?? imageUrl);
+    final extension = _extension(fileName, imageUrl, '');
+    final key = _stableHash('$itemCode|primary|$imageUrl');
+    final directory = await getApplicationSupportDirectory();
+    final path = p.join(directory.path, 'item_images', '$key$extension');
+    final file = File(path);
+    if (await file.exists() && await file.length() > 0) return path;
+    return null;
+  }
 
   static Future<List<ItemImageAttachment>> syncItemImages({
     required String itemCode,
@@ -87,7 +119,8 @@ class ItemImageService {
             );
             for (final attachment in attachments.whereType<Map>()) {
               final row = Map<String, dynamic>.from(attachment);
-              final key = row['name']?.toString() ?? row['file_url']?.toString();
+              final key =
+                  row['name']?.toString() ?? row['file_url']?.toString();
               if (key != null && key.isNotEmpty) filesByName[key] = row;
             }
           } catch (_) {}
@@ -111,7 +144,8 @@ class ItemImageService {
               limit: 500,
             );
             for (final row in files) {
-              final key = row['name']?.toString() ?? row['file_url']?.toString();
+              final key =
+                  row['name']?.toString() ?? row['file_url']?.toString();
               if (key != null && key.isNotEmpty) filesByName[key] = row;
             }
           } catch (_) {
@@ -186,6 +220,7 @@ class ItemImageService {
     required String fileName,
     required String fileUrl,
     required String contentType,
+    bool allowDownload = true,
   }) async {
     final extension = _extension(fileName, fileUrl, contentType);
     final key = _stableHash('$itemCode|$name|$fileUrl');
@@ -197,7 +232,7 @@ class ItemImageService {
     if (await localFile.exists() && await localFile.length() > 0) {
       return destination;
     }
-    if (!SyncStatusService().isOnline) return null;
+    if (!allowDownload || !SyncStatusService().isOnline) return null;
 
     try {
       await ErpService.downloadFile(
@@ -208,7 +243,11 @@ class ItemImageService {
         return destination;
       }
     } catch (_) {
-      if (await localFile.exists()) await localFile.delete();
+      if (await localFile.exists()) {
+        try {
+          await localFile.delete();
+        } catch (_) {}
+      }
     }
     return null;
   }

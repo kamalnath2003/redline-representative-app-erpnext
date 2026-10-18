@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'item_image_gallery.dart';
 import 'loading_indicator.dart';
 
 /// A record shown in [showSearchPicker]'s results list.
@@ -12,8 +13,11 @@ class PickedRecord {
     required this.label,
     this.subtitle,
     this.enabled = true,
-    this.onAccessoryTap,
-    this.accessoryTooltip,
+    this.imageUrl,
+    this.price,
+    this.stock,
+    this.quantity = 0,
+    this.onImageTap,
   });
 
   /// The DocType record's `name` (its ID) — what gets sent back to the API.
@@ -27,9 +31,11 @@ class PickedRecord {
   /// Disabled results stay visible to explain why they cannot be selected.
   final bool enabled;
 
-  /// Optional action shown as a compact trailing icon without selecting the row.
-  final Future<void> Function(BuildContext context)? onAccessoryTap;
-  final String? accessoryTooltip;
+  final String? imageUrl;
+  final num? price;
+  final num? stock;
+  final int quantity;
+  final Future<void> Function(BuildContext context)? onImageTap;
 }
 
 /// Full-screen searchable picker used for Customer/Item/Vehicle selection
@@ -49,6 +55,7 @@ Future<PickedRecord?> showSearchPicker({
   required BuildContext context,
   required String title,
   required Future<List<PickedRecord>> Function(String query) search,
+  Future<List<PickedRecord>> Function(String query)? backgroundSearch,
   String hintText = 'Search by name...',
   List<Widget> Function(BuildContext context, VoidCallback refresh)?
   actionsBuilder,
@@ -58,8 +65,32 @@ Future<PickedRecord?> showSearchPicker({
       builder: (context) => _SearchPickerScreen(
         title: title,
         search: search,
+        backgroundSearch: backgroundSearch,
         hintText: hintText,
         actionsBuilder: actionsBuilder,
+      ),
+    ),
+  );
+}
+
+Future<List<PickedRecord>?> showMultiItemPicker({
+  required BuildContext context,
+  required String title,
+  required Future<List<PickedRecord>> Function(String query) search,
+  required List<String> brands,
+  required void Function(String? brand) onBrandChanged,
+  required String? selectedBrand,
+}) {
+  return Navigator.of(context).push<List<PickedRecord>>(
+    MaterialPageRoute(
+      builder: (context) => _SearchPickerScreen(
+        title: title,
+        search: search,
+        hintText: 'Search items...',
+        multiSelect: true,
+        brands: brands,
+        selectedBrand: selectedBrand,
+        onBrandChanged: onBrandChanged,
       ),
     ),
   );
@@ -70,14 +101,24 @@ class _SearchPickerScreen extends StatefulWidget {
     required this.title,
     required this.search,
     required this.hintText,
+    this.backgroundSearch,
     this.actionsBuilder,
+    this.multiSelect = false,
+    this.brands = const [],
+    this.selectedBrand,
+    this.onBrandChanged,
   });
 
   final String title;
   final Future<List<PickedRecord>> Function(String query) search;
+  final Future<List<PickedRecord>> Function(String query)? backgroundSearch;
   final String hintText;
   final List<Widget> Function(BuildContext context, VoidCallback refresh)?
   actionsBuilder;
+  final bool multiSelect;
+  final List<String> brands;
+  final String? selectedBrand;
+  final void Function(String? brand)? onBrandChanged;
 
   @override
   State<_SearchPickerScreen> createState() => _SearchPickerScreenState();
@@ -90,6 +131,9 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
   bool _loading = false;
   String? _error;
   bool _searchedOnce = false;
+  final Map<String, int> _quantities = {};
+  final Map<String, PickedRecord> _selectedRecords = {};
+  int _searchGeneration = 0;
 
   @override
   void initState() {
@@ -106,6 +150,7 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
 
   void _onChanged(String query) {
     _debounce?.cancel();
+    _searchGeneration++;
     _debounce = Timer(
       const Duration(milliseconds: 350),
       () => _runSearch(query),
@@ -113,18 +158,25 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
   }
 
   Future<void> _runSearch(String query) async {
+    final generation = ++_searchGeneration;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
       final results = await widget.search(query);
-      if (!mounted) return;
+      if (!mounted || generation != _searchGeneration) return;
       setState(() {
         _results = results;
+        for (final record in results) {
+          _selectedRecords[record.name] = record;
+        }
         _loading = false;
         _searchedOnce = true;
       });
+      if (widget.backgroundSearch != null) {
+        unawaited(_refreshResultsInBackground(query, generation));
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -132,6 +184,21 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
         _searchedOnce = true;
         _error = e.toString();
       });
+    }
+  }
+
+  Future<void> _refreshResultsInBackground(String query, int generation) async {
+    try {
+      final results = await widget.backgroundSearch!(query);
+      if (!mounted || generation != _searchGeneration) return;
+      setState(() {
+        _results = results;
+        for (final record in results) {
+          _selectedRecords[record.name] = record;
+        }
+      });
+    } catch (_) {
+      // Keep displaying cached matches if the server refresh fails.
     }
   }
 
@@ -161,7 +228,62 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
                 ),
               ),
             ),
+            if (widget.multiSelect && widget.brands.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: DropdownButtonFormField<String?>(
+                  value: widget.selectedBrand,
+                  decoration: const InputDecoration(labelText: 'Brand'),
+                  items: [
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('All brands'),
+                    ),
+                    ...widget.brands.map(
+                      (b) =>
+                          DropdownMenuItem<String?>(value: b, child: Text(b)),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    widget.onBrandChanged?.call(value);
+                    _runSearch(_controller.text);
+                  },
+                ),
+              ),
             Expanded(child: _buildBody()),
+            if (widget.multiSelect)
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _quantities.values.any((q) => q > 0)
+                          ? () => Navigator.of(context).pop(
+                              _quantities.entries
+                                  .where((entry) => entry.value > 0)
+                                  .map((entry) {
+                                    final record = _selectedRecords[entry.key]!;
+                                    return PickedRecord(
+                                      name: record.name,
+                                      label: record.label,
+                                      quantity: entry.value,
+                                      price: record.price,
+                                      stock: record.stock,
+                                      imageUrl: record.imageUrl,
+                                    );
+                                  })
+                                  .toList(),
+                            )
+                          : null,
+                      child: Text(
+                        'Add selected (${_quantities.values.fold<int>(0, (a, b) => a + b)})',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -208,12 +330,24 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
       );
     }
 
-    return ListView.separated(
+    final width = MediaQuery.sizeOf(context).width;
+    final columns = width >= 900
+        ? 3
+        : width >= 600
+        ? 2
+        : 1;
+    return GridView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        mainAxisExtent: columns == 1 ? 122 : 150,
+      ),
       itemCount: _results.length,
-      separatorBuilder: (context, i) => const SizedBox(height: 8),
       itemBuilder: (context, i) {
         final record = _results[i];
+        final quantity = _quantities[record.name] ?? 0;
         return Material(
           color: record.enabled
               ? AppColors.white
@@ -221,13 +355,30 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
           borderRadius: BorderRadius.circular(AppRadius.card),
           child: InkWell(
             borderRadius: BorderRadius.circular(AppRadius.card),
-            onTap: record.enabled
+            onTap: widget.multiSelect
+                ? null
+                : record.enabled
                 ? () => Navigator.of(context).pop(record)
                 : null,
             child: Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(10),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  if (record.imageUrl != null && record.imageUrl!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: GestureDetector(
+                        onTap: record.onImageTap == null
+                            ? null
+                            : () => record.onImageTap!(context),
+                        child: ItemImageThumbnail(
+                          itemCode: record.name,
+                          imageUrl: record.imageUrl,
+                          size: widget.multiSelect ? 68 : 54,
+                        ),
+                      ),
+                    ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,9 +408,55 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
                             ),
                           ),
                         ],
+                        if (widget.multiSelect) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Price: ${record.price?.toStringAsFixed(2) ?? '—'}',
+                          ),
+                          Text('Stock: ${record.stock?.toString() ?? '—'}'),
+                        ],
                       ],
                     ),
                   ),
+                  if (widget.multiSelect)
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 34,
+                            height: 34,
+                          ),
+                          onPressed: () => setState(
+                            () => _quantities[record.name] = quantity + 1,
+                          ),
+                          icon: const Icon(Icons.add_circle_outline),
+                        ),
+                        Text(
+                          '$quantity',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 34,
+                            height: 34,
+                          ),
+                          onPressed: quantity == 0
+                              ? null
+                              : () => setState(
+                                  () => _quantities[record.name] = quantity - 1,
+                                ),
+                          icon: const Icon(Icons.remove_circle_outline),
+                        ),
+                      ],
+                    )
+                  else
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.midGray,
+                    ),
                   if (!record.enabled) ...[
                     const SizedBox(width: 8),
                     const Icon(
@@ -268,18 +465,6 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
                       size: 20,
                     ),
                   ],
-                  if (record.onAccessoryTap != null)
-                    IconButton(
-                      tooltip:
-                          record.accessoryTooltip ?? 'View and sync images',
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => record.onAccessoryTap!(context),
-                      icon: const Icon(
-                        Icons.image_outlined,
-                        color: AppColors.accent,
-                        size: 20,
-                      ),
-                    ),
                 ],
               ),
             ),

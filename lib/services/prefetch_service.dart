@@ -1,6 +1,7 @@
 import 'cache_service.dart';
 import 'erp_service.dart';
 import 'item_catalog_service.dart';
+import 'item_image_service.dart';
 import 'sync_status_service.dart';
 
 /// Fired once, best-effort, right after the home screen opens with a real
@@ -17,20 +18,56 @@ import 'sync_status_service.dart';
 /// screen falls back to its own normal live-or-cached load when opened.
 class PrefetchService {
   static bool _ranThisSession = false;
+  static bool _refreshingOfflineData = false;
+
+  static Future<bool> refreshOfflineData({
+    void Function(String stage)? onProgress,
+  }) async {
+    if (_refreshingOfflineData) return false;
+    _refreshingOfflineData = true;
+    try {
+      if (!await SyncStatusService().checkNow()) return false;
+      onProgress?.call('Customers');
+      final customerComplete = await _captureRefresh(_warmCustomerMaster);
+      onProgress?.call('Items, brands, prices and stock');
+      final catalogComplete = await _captureRefresh(() async {
+        await ItemCatalogService.sync();
+      });
+      if (!SyncStatusService().isOnline) return false;
+      onProgress?.call('Other reference data');
+      final otherComplete = await _warmOtherMasterCaches();
+      if (!SyncStatusService().isOnline) return false;
+      onProgress?.call('Item images');
+      final imagesComplete = await _captureRefresh(
+        () => ItemImageService.prefetchCatalogImages(),
+      );
+      onProgress?.call('Complete');
+      return customerComplete &&
+          catalogComplete &&
+          otherComplete &&
+          imagesComplete;
+    } finally {
+      _refreshingOfflineData = false;
+    }
+  }
+
+  static Future<bool> _captureRefresh(Future<void> Function() action) async {
+    try {
+      await action();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 
   static Future<void> warmCachesOnce() async {
     if (_ranThisSession) return;
     _ranThisSession = true;
     if (!SyncStatusService().isOnline) return;
 
-    await Future.wait([
-      _warmCustomers(),
-      _warmSalesOrders(),
-      _warmSalesInvoices(),
-      _warmPendingTransfers(),
-      _warmItemCatalog(),
-      _warmMasterCaches(),
-    ]);
+    // Keep startup light for low-end tablets. The Sync Queue's explicit
+    // refresh action downloads the full offline reference catalog.
+    await _warmCustomers();
   }
 
   /// Reacts to a push notification's `data.doctype` (see
@@ -153,35 +190,32 @@ class PrefetchService {
     } catch (_) {}
   }
 
-  static Future<void> _warmItemCatalog() async {
-    try {
-      await ItemCatalogService.sync();
-    } catch (_) {}
+  static Future<void> _warmCustomerMaster() async {
+    final territories = await ErpService.getExpandedUserTerritories();
+    final rows = await ErpService.getList(
+      'Customer',
+      filters: [
+        if (territories.isNotEmpty) ['territory', 'in', territories],
+      ],
+      fields: const [
+        'name',
+        'customer_name',
+        'territory',
+        'disabled',
+        'is_frozen',
+      ],
+      limit: 5000,
+    );
+    await CacheService.getListCached(
+      cacheDoctype: 'Customer_master',
+      cacheKey: 'master',
+      fetch: () async => rows,
+    );
   }
 
-  static Future<void> _warmMasterCaches() async {
+  static Future<bool> _warmOtherMasterCaches() async {
     try {
-      final territories = await ErpService.getExpandedUserTerritories();
-      await Future.wait([
-        // Customers
-        CacheService.getListCached(
-          cacheDoctype: 'Customer_master',
-          cacheKey: 'master',
-          fetch: () => ErpService.getList(
-            'Customer',
-            filters: [
-              if (territories.isNotEmpty) ['territory', 'in', territories],
-            ],
-            fields: const [
-              'name',
-              'customer_name',
-              'territory',
-              'disabled',
-              'is_frozen',
-            ],
-            limit: 5000,
-          ),
-        ),
+      final results = await Future.wait([
         // Warehouses
         CacheService.getListCached(
           cacheDoctype: 'Warehouse_master',
@@ -279,7 +313,17 @@ class PrefetchService {
             limit: 100,
           ),
         ),
+        // Brand picker options, stored with the catalog too.
+        CacheService.getListCached(
+          cacheDoctype: 'Brand_master',
+          cacheKey: 'master',
+          fetch: () =>
+              ErpService.getList('Brand', fields: const ['name'], limit: 500),
+        ),
       ]);
-    } catch (_) {}
+      return results.length == 10;
+    } catch (_) {
+      return false;
+    }
   }
 }

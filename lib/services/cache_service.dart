@@ -41,6 +41,11 @@ class CacheService {
   @visibleForTesting
   static void debugOverrideDatabase(AppDatabase database) => _db = database;
 
+  static Future<CachedListResult?> readCached(
+    String cacheDoctype,
+    String cacheKey,
+  ) => _read(cacheDoctype, cacheKey);
+
   /// Tries the live [fetch] first. On success, caches the result and
   /// returns it fresh. On a connectivity failure, falls back to the last
   /// successful cache for this exact key, if any — and rethrows only when

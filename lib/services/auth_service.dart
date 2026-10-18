@@ -67,8 +67,11 @@ class AuthService {
   static const _domainKey = 'red_erp_domain';
   static const _accessTokenKey = 'red_erp_access_token';
   static const _refreshTokenKey = 'red_erp_refresh_token';
+  static const _usernameKey = 'red_erp_saved_username';
+  static const _passwordKey = 'red_erp_saved_password';
   static const _biometricEnabledKey = 'red_erp_biometric_enabled';
   static const _cachedProfileKey = 'red_erp_cached_profile';
+  static const _fullNameKey = 'red_erp_saved_full_name';
   static const _sessionUserKey = 'red_erp_session_user';
 
   static SecureStore _store = const RealSecureStore();
@@ -109,12 +112,60 @@ class AuthService {
     return domain;
   }
 
+  static Future<String?> savedUsername() => _store.read(_usernameKey);
+
+  static Future<String?> savedPassword() => _store.read(_passwordKey);
+
+  static Future<String?> savedFullName() => _store.read(_fullNameKey);
+
+  static Future<AuthResult> reloginWithSavedCredentials() async {
+    final domain = await _store.read(_domainKey);
+    final username = await _store.read(_usernameKey);
+    final password = await _store.read(_passwordKey);
+    if (domain == null || username == null || password == null) {
+      throw const AuthException(
+        'Saved login details are unavailable. Please sign in manually.',
+        serverRejected: true,
+      );
+    }
+    return login(domain: domain, username: username, password: password);
+  }
+
   static Future<AuthResult> login({
     required String domain,
     required String username,
     required String password,
   }) async {
     final baseUrl = normalizeDomain(domain);
+    final nextScope = '$baseUrl|${username.trim().toLowerCase()}';
+    final savedDomain = await _store.read(_domainKey);
+    final savedUsername = await _store.read(_usernameKey);
+    final savedPassword = await _store.read(_passwordKey);
+    final previousScope = await _store.read(_sessionUserKey) ??
+        (savedDomain != null && savedUsername != null
+            ? '${normalizeDomain(savedDomain)}|${savedUsername.trim().toLowerCase()}'
+            : null);
+
+    // The saved password is in secure storage. If the user enters the same
+    // credentials, use the saved session immediately; this lets sign-in work
+    // without a network connection and avoids waiting for a request timeout.
+    final credentialsMatch = savedDomain != null &&
+        normalizeDomain(savedDomain) == baseUrl &&
+        savedUsername?.trim().toLowerCase() == username.trim().toLowerCase() &&
+        savedPassword == password;
+    if (credentialsMatch) {
+      final accessToken = await _store.read(_accessTokenKey);
+      final refreshToken = await _store.read(_refreshTokenKey);
+      if (accessToken != null && refreshToken != null) {
+        _cachedUserId = null;
+        _cachedRoles = null;
+        return AuthResult(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        );
+      }
+    }
+
     final dio = _client(baseUrl);
 
     try {
@@ -134,11 +185,11 @@ class AuthService {
       final refreshToken = payload['refresh_token'] as String?;
 
       if (accessToken == null || refreshToken == null) {
-        throw const AuthException('Unable to complete sign-in. Please try again.');
+        throw const AuthException(
+          'Unable to complete sign-in. Please try again.',
+        );
       }
 
-      final nextScope = '$baseUrl|${username.trim().toLowerCase()}';
-      final previousScope = await _store.read(_sessionUserKey);
       if (previousScope != nextScope) {
         try {
           await AppDatabase.instance.clearAllUserData();
@@ -146,11 +197,17 @@ class AuthService {
           // Login must not fail solely because an old local cache is
           // unavailable; the database remains private to this app.
         }
+        await _store.delete(_cachedProfileKey);
+        await _store.delete(_fullNameKey);
+        _cachedUserId = null;
+        _cachedRoles = null;
       }
 
       await _store.write(_domainKey, baseUrl);
       await _store.write(_accessTokenKey, accessToken);
       await _store.write(_refreshTokenKey, refreshToken);
+      await _store.write(_usernameKey, username.trim());
+      await _store.write(_passwordKey, password);
       await _store.write(_sessionUserKey, nextScope);
 
       return AuthResult(accessToken: accessToken, refreshToken: refreshToken);
@@ -171,7 +228,10 @@ class AuthService {
     final refreshToken = await _store.read(_refreshTokenKey);
 
     if (domain == null || refreshToken == null) {
-      throw const AuthException('No saved session was found.', serverRejected: true);
+      throw const AuthException(
+        'No saved session was found.',
+        serverRejected: true,
+      );
     }
 
     final dio = _client(domain);
@@ -227,7 +287,10 @@ class AuthService {
     final accessToken = await _store.read(_accessTokenKey);
 
     if (domain == null || accessToken == null) {
-      throw const AuthException('No saved session was found.', serverRejected: true);
+      throw const AuthException(
+        'No saved session was found.',
+        serverRejected: true,
+      );
     }
 
     final dio = _client(domain);
@@ -246,6 +309,10 @@ class AuthService {
 
       final data = _unwrap(response.data);
       await _store.write(_cachedProfileKey, jsonEncode(data));
+      final fullName = (data['full_name'] ?? data['user_full_name'])?.toString();
+      if (fullName != null && fullName.trim().isNotEmpty) {
+        await _store.write(_fullNameKey, fullName.trim());
+      }
       return data;
     } on DioException catch (e) {
       final cached = await _store.read(_cachedProfileKey);
@@ -329,6 +396,10 @@ class AuthService {
     final domain = await _store.read(_domainKey);
     final accessToken = await _store.read(_accessTokenKey);
 
+    // Clear local credentials before the best-effort server request so a
+    // slow or unavailable network can never delay sign-out on this device.
+    await clearSession();
+
     if (domain != null && accessToken != null) {
       try {
         final dio = _client(domain);
@@ -346,8 +417,6 @@ class AuthService {
         // this device just because the network dropped.
       }
     }
-
-    await clearSession();
   }
 
   static Future<void> clearSession() async {
@@ -360,7 +429,10 @@ class AuthService {
     await _store.delete(_domainKey);
     await _store.delete(_accessTokenKey);
     await _store.delete(_refreshTokenKey);
+    await _store.delete(_usernameKey);
+    await _store.delete(_passwordKey);
     await _store.delete(_cachedProfileKey);
+    await _store.delete(_fullNameKey);
     await _store.delete(_sessionUserKey);
     _cachedUserId = null;
     _cachedRoles = null;
@@ -495,7 +567,9 @@ class AuthService {
           'Could not connect to the server. Check the address and your internet connection, or try another network.',
         );
       default:
-        return const AuthException('An unexpected error occurred. Please try again later.');
+        return const AuthException(
+          'An unexpected error occurred. Please try again later.',
+        );
     }
   }
 }

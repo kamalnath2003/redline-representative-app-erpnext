@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../local_db/sync_job_type.dart';
 import '../services/cache_service.dart';
 import '../services/erp_service.dart';
+import '../services/item_catalog_service.dart';
 import '../services/sync_engine.dart';
 import '../services/sync_status_service.dart';
 import '../theme/app_theme.dart';
@@ -113,6 +114,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   num? _creditLimit;
   num? _currentOutstanding;
   bool _loadingPartyDetails = false;
+  bool _openingCustomerPicker = false;
   DateTime? _deliveryDate;
   PickedRecord? _paymentTerms;
   List<Map<String, dynamic>> _paymentScheduleTerms = [];
@@ -253,21 +255,32 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   /// Deliberately no client-side `account_manager` filter — see
   /// SalesOrderScreen._pickCustomer for why.
   Future<void> _pickCustomer() async {
-    List<String> territories;
-    try {
-      territories = await ErpService.getExpandedUserTerritories();
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not determine your territories. Check your internet connection.',
-          ),
-        ),
-      );
+    if (_openingCustomerPicker || _loadingPartyDetails) return;
+    setState(() => _openingCustomerPicker = true);
+    final initialCache = await CacheService.readCached(
+      'Customer_master',
+      'master',
+    );
+    var territories = (initialCache?.rows ?? const <Map<String, dynamic>>[])
+        .map((row) => row['territory']?.toString() ?? '')
+        .where((value) => value.isNotEmpty)
+        .toSet()
+        .toList();
+    Future<List<String>>? territoriesFuture;
+    Future<List<String>> loadTerritories() {
+      if (!SyncStatusService().isOnline) return Future.value(territories);
+      return territoriesFuture ??= ErpService.getExpandedUserTerritories()
+          .then((loaded) {
+            territories = loaded;
+            return loaded;
+          })
+          .catchError((Object _) => territories);
+    }
+
+    if (!mounted) {
+      _openingCustomerPicker = false;
       return;
     }
-    if (!mounted) return;
     String? territoryFilter;
 
     final result = await showSearchPicker(
@@ -275,17 +288,41 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       title: 'Select Customer',
       hintText: 'Search customers...',
       search: (query) async {
+        final cached = await CacheService.readCached(
+          'Customer_master',
+          'master',
+        );
+        return _customerPickerRecords(
+          cached?.rows ?? const <Map<String, dynamic>>[],
+          query,
+          territories,
+          territoryFilter,
+        );
+      },
+      backgroundSearch: (query) async {
+        if (!SyncStatusService().isOnline) {
+          final cached = await CacheService.readCached(
+            'Customer_master',
+            'master',
+          );
+          return _customerPickerRecords(
+            cached?.rows ?? const <Map<String, dynamic>>[],
+            query,
+            territories,
+            territoryFilter,
+          );
+        }
+        final territoryList = await loadTerritories();
         final filters = <List<dynamic>>[
           if (query.isNotEmpty) ['customer_name', 'like', '%$query%'],
           if (territoryFilter != null)
             ['territory', '=', territoryFilter]
-          else if (territories.length == 1)
-            ['territory', '=', territories.first]
-          else if (territories.isNotEmpty)
-            ['territory', 'in', territories],
+          else if (territoryList.length == 1)
+            ['territory', '=', territoryList.first]
+          else if (territoryList.isNotEmpty)
+            ['territory', 'in', territoryList],
         ];
-
-        final list = await CacheService.getSearchListCached(
+        await CacheService.getSearchListCached(
           cacheDoctype: 'Customer_master',
           fetch: () => ErpService.getList(
             'Customer',
@@ -297,82 +334,103 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               'disabled',
               'is_frozen',
             ],
-            limit: 20,
+            limit: 50,
           ),
-          searchFilter: (row) {
-            final name = (row['name'] ?? '').toString().toLowerCase();
-            final customerName = (row['customer_name'] ?? '')
-                .toString()
-                .toLowerCase();
-            final terr = (row['territory'] ?? '').toString();
-            final q = query.toLowerCase();
-            if (q.isNotEmpty &&
-                !name.contains(q) &&
-                !customerName.contains(q)) {
-              return false;
-            }
-            if (territoryFilter != null && terr != territoryFilter) {
-              return false;
-            }
-            if (territoryFilter == null &&
-                territories.length == 1 &&
-                terr != territories.first) {
-              return false;
-            }
-            if (territoryFilter == null &&
-                territories.isNotEmpty &&
-                territories.length > 1 &&
-                !territories.contains(terr)) {
-              return false;
-            }
-            return true;
-          },
+          searchFilter: (row) =>
+              _customerRowMatches(row, query, territoryList, territoryFilter),
         );
-        return list
-            .map(
-              (c) => PickedRecord(
-                name: c['name'] as String,
-                label: (c['customer_name'] as String?) ?? c['name'] as String,
-                subtitle: ErpService.customerPickerSubtitle(
-                  c,
-                  prefix: c['territory'] as String?,
-                ),
-                enabled: ErpService.isCustomerSelectable(c),
-              ),
-            )
-            .toList();
+        final cached = await CacheService.readCached(
+          'Customer_master',
+          'master',
+        );
+        return _customerPickerRecords(
+          cached?.rows ?? const <Map<String, dynamic>>[],
+          query,
+          territoryList,
+          territoryFilter,
+        );
       },
-      actionsBuilder: territories.length <= 1
-          ? null
-          : (pickerContext, refresh) => [
-              IconButton(
-                icon: const Icon(Icons.tune_rounded),
-                tooltip: territoryFilter == null
-                    ? 'Filter by Territory'
-                    : 'Territory: $territoryFilter',
-                onPressed: () async {
-                  final picked = await showSearchPicker(
-                    context: pickerContext,
-                    title: 'Select Territory',
-                    search: (q) async => territories
-                        .where(
-                          (t) =>
-                              q.isEmpty ||
-                              t.toLowerCase().contains(q.toLowerCase()),
-                        )
-                        .map((t) => PickedRecord(name: t, label: t))
-                        .toList(),
-                  );
-                  if (picked == null) return;
-                  territoryFilter = picked.name;
-                  refresh();
-                },
-              ),
-            ],
+      actionsBuilder: (pickerContext, refresh) => [
+        IconButton(
+          icon: const Icon(Icons.tune_rounded),
+          tooltip: territoryFilter == null
+              ? 'Filter by Territory'
+              : 'Territory: $territoryFilter',
+          onPressed: () async {
+            final territoryList = await loadTerritories();
+            final picked = await showSearchPicker(
+              context: pickerContext,
+              title: 'Select Territory',
+              search: (q) async => territoryList
+                  .where(
+                    (t) =>
+                        q.isEmpty || t.toLowerCase().contains(q.toLowerCase()),
+                  )
+                  .map((t) => PickedRecord(name: t, label: t))
+                  .toList(),
+            );
+            if (picked == null) return;
+            territoryFilter = picked.name;
+            refresh();
+          },
+        ),
+      ],
     );
-    if (result == null) return;
+    if (result == null) {
+      if (mounted) setState(() => _openingCustomerPicker = false);
+      return;
+    }
     await _loadCustomerDetails(result);
+    if (mounted) setState(() => _openingCustomerPicker = false);
   }
+
+  bool _customerRowMatches(
+    Map<String, dynamic> row,
+    String query,
+    List<String> territoryList,
+    String? territoryFilter,
+  ) {
+    final name = (row['name'] ?? '').toString().toLowerCase();
+    final customerName = (row['customer_name'] ?? '').toString().toLowerCase();
+    final territory = (row['territory'] ?? '').toString();
+    final q = query.toLowerCase().trim();
+    if (q.isNotEmpty && !name.contains(q) && !customerName.contains(q)) {
+      return false;
+    }
+    if (territoryFilter != null && territory != territoryFilter) return false;
+    if (territoryFilter == null &&
+        territoryList.isNotEmpty &&
+        !territoryList.contains(territory)) {
+      return false;
+    }
+    return ErpService.isCustomerSelectable(row);
+  }
+
+  List<PickedRecord> _customerPickerRecords(
+    List<Map<String, dynamic>> rows,
+    String query,
+    List<String> territoryList,
+    String? territoryFilter,
+  ) => rows
+      .where(
+        (row) =>
+            _customerRowMatches(row, query, territoryList, territoryFilter),
+      )
+      .take(300)
+      .map(
+        (customer) => PickedRecord(
+          name: customer['name'] as String,
+          label:
+              (customer['customer_name'] as String?) ??
+              customer['name'] as String,
+          subtitle: ErpService.customerPickerSubtitle(
+            customer,
+            prefix: customer['territory'] as String?,
+          ),
+          enabled: ErpService.isCustomerSelectable(customer),
+        ),
+      )
+      .toList();
 
   /// Shared between [_pickCustomer] and the edit-mode prefill.
   Future<void> _loadCustomerDetails(PickedRecord result) async {
@@ -456,40 +514,33 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   }
 
   Future<void> _addItem() async {
-    final result = await showSearchPicker(
+    String? brandFilter;
+    final brands = await ItemCatalogService.cachedBrands();
+    final result = await showMultiItemPicker(
       context: context,
-      title: 'Select Item',
-      hintText: 'Search items...',
+      title: 'Select Items',
+      brands: brands,
+      selectedBrand: brandFilter,
+      onBrandChanged: (value) => brandFilter = value,
       search: (query) async {
-        final list = await CacheService.getSearchListCached(
-          cacheDoctype: 'Item_master',
-          fetch: () => ErpService.getList(
-            'Item',
-            filters: query.isEmpty
-                ? null
-                : [
-                    ['item_name', 'like', '%$query%'],
-                  ],
-            fields: const ['name', 'item_name', 'image'],
-            limit: 20,
-          ),
-          searchFilter: (row) {
-            final name = (row['name'] ?? '').toString().toLowerCase();
-            final itemName = (row['item_name'] ?? '').toString().toLowerCase();
-            final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !itemName.contains(q)) {
-              return false;
-            }
-            return true;
-          },
+        final rows = await ItemCatalogService.searchCached(
+          query: query,
+          brand: brandFilter,
         );
-        return list.map((item) {
+        return rows.map((item) {
           final code = item['name'] as String;
           final name = (item['item_name'] as String?) ?? code;
+          final prices = item['selling_price_by_list'] as Map?;
           return PickedRecord(
             name: code,
             label: name,
-            onAccessoryTap: (pickerContext) => showItemImageGallery(
+            imageUrl: item['image'] as String?,
+            price:
+                prices?[_priceList] as num? ??
+                prices?[item['selling_price_list']] as num? ??
+                item['selling_price'] as num?,
+            stock: item['stock_qty'] as num?,
+            onImageTap: (pickerContext) => showItemImageGallery(
               pickerContext,
               itemCode: code,
               itemName: name,
@@ -499,41 +550,55 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         }).toList();
       },
     );
-    if (result == null) return;
+    if (result == null || result.isEmpty) return;
+    final pickedLines = <_InvoiceLine>[];
+    for (final picked in result) {
+      final line = _InvoiceLine(itemCode: picked.name, itemName: picked.label)
+        ..qty = picked.quantity.toDouble()
+        ..unitPrice = picked.price;
 
-    final line = _InvoiceLine(itemCode: result.name, itemName: result.label);
-
-    bool hasBatchNo = false;
-    try {
-      final itemRows = await ErpService.getList(
-        'Item',
-        filters: [
-          ['name', '=', result.name],
-        ],
-        fields: const ['has_batch_no', 'has_serial_no'],
-        limit: 1,
-      );
-      hasBatchNo = itemRows.isNotEmpty && itemRows.first['has_batch_no'] == 1;
-      line.hasSerialNo =
-          itemRows.isNotEmpty && itemRows.first['has_serial_no'] == 1;
-    } catch (_) {
-      // فشل التحقق يترك الصنف عاديًا (بدون لوط) بدل ما يوقف الإضافة بالكامل.
-    }
-
-    if (hasBatchNo) {
-      final picked = await _pickBatchForLine(line);
-      if (!picked) {
-        return; // الصنف ده لازم لوط — من غير ما يختار واحد، مش بيتضاف خالص.
+      bool hasBatchNo = false;
+      try {
+        final itemRows = await ErpService.getList(
+          'Item',
+          filters: [
+            ['name', '=', picked.name],
+          ],
+          fields: const ['has_batch_no', 'has_serial_no'],
+          limit: 1,
+        );
+        hasBatchNo = itemRows.isNotEmpty && itemRows.first['has_batch_no'] == 1;
+        line.hasSerialNo =
+            itemRows.isNotEmpty && itemRows.first['has_serial_no'] == 1;
+      } catch (_) {
+        final catalog = await ItemCatalogService.searchCached(
+          query: picked.name,
+        );
+        final cachedItem = catalog.where((item) => item['name'] == picked.name);
+        if (cachedItem.isNotEmpty) {
+          hasBatchNo = cachedItem.first['has_batch_no'] == 1;
+          line.hasSerialNo = cachedItem.first['has_serial_no'] == 1;
+        }
       }
-    }
 
-    if (line.hasSerialNo) {
-      final picked = await _pickSerialsForLine(line);
-      if (!picked) return;
-    }
+      if (hasBatchNo) {
+        final picked = await _pickBatchForLine(line);
+        if (!picked) {
+          break;
+        }
+      }
 
-    setState(() => _lines.add(line));
-    await _fetchPriceForLine(line);
+      if (line.hasSerialNo) {
+        final picked = await _pickSerialsForLine(line);
+        if (!picked) break;
+      }
+
+      pickedLines.add(line);
+    }
+    setState(() => _lines.addAll(pickedLines));
+    for (final line in pickedLines) {
+      if (line.unitPrice == null) await _fetchPriceForLine(line);
+    }
   }
 
   /// يجمع كل اللوطات المتاحة فعليًا (كمية > 0) لـ[line.itemCode] في كل
@@ -1819,8 +1884,12 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         _pickerCard(
           label: _customer?.label ?? 'Select customer',
           icon: Icons.storefront_rounded,
-          onTap: _pickCustomer,
-          trailing: _loadingPartyDetails
+          onTap: _openingCustomerPicker || _loadingPartyDetails
+              ? () {}
+              : () {
+                  _pickCustomer();
+                },
+          trailing: _openingCustomerPicker || _loadingPartyDetails
               ? const SizedBox(
                   width: 16,
                   height: 16,

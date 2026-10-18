@@ -64,7 +64,7 @@ class _ItemImageThumbnailState extends State<ItemImageThumbnail> {
   Future<String?> _loadImage() {
     final url = widget.imageUrl;
     if (url == null || url.trim().isEmpty) return Future.value(null);
-    return ItemImageService.localOrDownloadPrimaryImage(
+    return ItemImageService.cachedPrimaryImagePath(
       itemCode: widget.itemCode,
       imageUrl: url,
     );
@@ -234,13 +234,21 @@ class _ItemImageGallerySheetState extends State<_ItemImageGallerySheet> {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: image.localPath == null
-                    ? _imagePlaceholder()
-                    : _buildImage(
-                        image.localPath!,
-                        BoxFit.contain,
-                        _imagePlaceholder(),
-                      ),
+                child: Material(
+                  color: AppColors.lightGray,
+                  child: InkWell(
+                    onTap: image.localPath == null
+                        ? null
+                        : () => _showFullScreenImage(context, image),
+                    child: image.localPath == null
+                        ? _imagePlaceholder()
+                        : _buildImage(
+                            image.localPath!,
+                            BoxFit.contain,
+                            _imagePlaceholder(),
+                          ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 6),
@@ -255,6 +263,39 @@ class _ItemImageGallerySheetState extends State<_ItemImageGallerySheet> {
       },
     );
   }
+}
+
+void _showFullScreenImage(BuildContext context, ItemImageAttachment image) {
+  final path = image.localPath;
+  if (path == null) return;
+  showDialog<void>(
+    context: context,
+    barrierColor: Colors.black,
+    builder: (context) => Dialog.fullscreen(
+      backgroundColor: Colors.black,
+      child: Stack(
+        children: [
+          Center(
+            child: InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 5,
+              child: _buildImage(path, BoxFit.contain, _imagePlaceholder()),
+            ),
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                tooltip: 'Close',
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close_rounded, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 Widget _buildImage(String path, BoxFit fit, Widget fallback) {
