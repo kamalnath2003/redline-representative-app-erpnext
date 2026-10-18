@@ -1,5 +1,6 @@
 import 'cache_service.dart';
 import 'erp_service.dart';
+import 'item_catalog_service.dart';
 import 'sync_status_service.dart';
 
 /// Fired once, best-effort, right after the home screen opens with a real
@@ -27,6 +28,7 @@ class PrefetchService {
       _warmSalesOrders(),
       _warmSalesInvoices(),
       _warmPendingTransfers(),
+      _warmItemCatalog(),
       _warmMasterCaches(),
     ]);
   }
@@ -151,6 +153,12 @@ class PrefetchService {
     } catch (_) {}
   }
 
+  static Future<void> _warmItemCatalog() async {
+    try {
+      await ItemCatalogService.sync();
+    } catch (_) {}
+  }
+
   static Future<void> _warmMasterCaches() async {
     try {
       final territories = await ErpService.getExpandedUserTerritories();
@@ -171,16 +179,6 @@ class PrefetchService {
               'disabled',
               'is_frozen',
             ],
-            limit: 5000,
-          ),
-        ),
-        // Items
-        CacheService.getListCached(
-          cacheDoctype: 'Item_master',
-          cacheKey: 'master',
-          fetch: () => ErpService.getList(
-            'Item',
-            fields: const ['name', 'item_name'],
             limit: 5000,
           ),
         ),

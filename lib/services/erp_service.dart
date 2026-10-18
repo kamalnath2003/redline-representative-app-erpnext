@@ -694,7 +694,9 @@ class ErpService {
     }
 
     if (territories.isEmpty && hadConnectivityFailure) {
-      throw const ErpException('Could not determine your territories. Check your internet connection.');
+      throw const ErpException(
+        'Could not determine your territories. Check your internet connection.',
+      );
     }
 
     return territories.toList();
@@ -1172,6 +1174,83 @@ class ErpService {
     );
   }
 
+  static Future<void> downloadFile({
+    required String fileUrl,
+    required String destinationPath,
+    bool isRetry = false,
+  }) async {
+    final domain = await AuthService.currentDomain();
+    final token = await AuthService.currentAccessToken();
+    if (domain == null || token == null) {
+      throw const ErpException(
+        'No saved session was found.',
+        serverRejected: true,
+        sessionExpired: true,
+      );
+    }
+
+    final baseUri = Uri.parse(domain);
+    final requestedUri = Uri.parse(fileUrl);
+    final uri = requestedUri.hasScheme
+        ? requestedUri
+        : baseUri.resolveUri(requestedUri);
+    final sameHost =
+        uri.host.toLowerCase() == baseUri.host.toLowerCase() &&
+        uri.port == baseUri.port;
+
+    final dio = _dio ??= Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 30),
+      ),
+    );
+    dio.options.baseUrl = domain;
+
+    try {
+      final response = await dio
+          .download(
+            uri.toString(),
+            destinationPath,
+            options: Options(
+              headers: sameHost ? {'Authorization': 'Bearer $token'} : null,
+              validateStatus: (status) => status != null && status < 500,
+            ),
+          )
+          .timeout(_hardNetworkTimeout);
+
+      if (response.statusCode == 401 && !isRetry) {
+        try {
+          await AuthService.refreshSession();
+        } on AuthException {
+          throw const ErpException(
+            'Your session expired. Please sign in again.',
+            serverRejected: true,
+            sessionExpired: true,
+          );
+        }
+        await downloadFile(
+          fileUrl: fileUrl,
+          destinationPath: destinationPath,
+          isRetry: true,
+        );
+        return;
+      }
+
+      if ((response.statusCode ?? 0) >= 400) {
+        throw ErpException(
+          'Could not download file (HTTP ${response.statusCode}).',
+          serverRejected: true,
+        );
+      }
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    } on TimeoutException {
+      throw const ErpException(
+        'The connection timed out. Check your network and try again.',
+      );
+    }
+  }
+
   /// Uploads a local file and attaches it to an EXISTING document â€”
   /// `frappe.handler.upload_file`, the standard Frappe framework endpoint
   /// behind every "Attach" button in Desk (not ERPNext-specific, not
@@ -1400,7 +1479,9 @@ class ErpService {
           'Could not connect to the server. Check your internet connection.',
         );
       default:
-        return const ErpException('An unexpected error occurred. Please try again later.');
+        return const ErpException(
+          'An unexpected error occurred. Please try again later.',
+        );
     }
   }
 }

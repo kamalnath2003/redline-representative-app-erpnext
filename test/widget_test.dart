@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:red_erp/main.dart';
 import 'package:red_erp/services/sync_status_service.dart';
 import 'package:red_erp/widgets/app_logo.dart';
+import 'package:red_erp/widgets/swipe_to_confirm_button.dart';
 
 void main() {
   testWidgets('Splash screen reveals the logo then the greeting', (
@@ -35,5 +36,40 @@ void main() {
     // connectivity subscription/fallback timer, so nothing is left
     // pending at teardown.
     await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('swiping the track confirms in the English reading direction', (
+    WidgetTester tester,
+  ) async {
+    var confirmed = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 320,
+              child: SwipeToConfirmButton(
+                label: 'Swipe to save',
+                confirmedLabel: 'Saved',
+                onConfirmed: () async {
+                  confirmed = true;
+                  return true;
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.drag(
+      find.byType(SwipeToConfirmButton),
+      const Offset(260, 0),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(confirmed, isTrue);
+    expect(find.text('Saved'), findsOneWidget);
   });
 }

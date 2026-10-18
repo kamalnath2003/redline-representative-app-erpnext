@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 
 import '../local_db/app_database.dart';
@@ -35,7 +36,10 @@ class CachedListResult {
 /// Deliberately only caches successful LIST fetches, not writes — this has
 /// nothing to do with `SyncEngine`'s queue.
 class CacheService {
-  static final AppDatabase _db = AppDatabase.instance;
+  static AppDatabase _db = AppDatabase.instance;
+
+  @visibleForTesting
+  static void debugOverrideDatabase(AppDatabase database) => _db = database;
 
   /// Tries the live [fetch] first. On success, caches the result and
   /// returns it fresh. On a connectivity failure, falls back to the last
@@ -156,7 +160,13 @@ class CacheService {
     required bool Function(Map<String, dynamic> row) searchFilter,
   }) async {
     try {
-      return await fetch();
+      final rows = await fetch();
+      try {
+        await _mergeIntoMaster(cacheDoctype, rows);
+      } catch (_) {
+        // Cache failure must not turn a successful live search into an error.
+      }
+      return rows;
     } catch (e) {
       final isConnectivityFailure = e is ErpException
           ? e.isConnectivityFailure
@@ -170,5 +180,29 @@ class CacheService {
       }
       rethrow;
     }
+  }
+
+  static Future<void> _mergeIntoMaster(
+    String cacheDoctype,
+    List<Map<String, dynamic>> rows,
+  ) async {
+    final existing = await _read(cacheDoctype, 'master');
+    final merged = <String, Map<String, dynamic>>{};
+    for (final row in existing?.rows ?? const <Map<String, dynamic>>[]) {
+      final name = row['name']?.toString();
+      if (name != null && name.isNotEmpty) merged[name] = row;
+    }
+    for (final row in rows) {
+      final name = row['name']?.toString();
+      if (name == null || name.isEmpty) continue;
+      merged[name] = {...?merged[name], ...row};
+    }
+    if (merged.isEmpty) return;
+    await _write(
+      cacheDoctype,
+      'master',
+      merged.values.toList(),
+      DateTime.now(),
+    );
   }
 }

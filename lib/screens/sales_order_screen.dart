@@ -13,6 +13,7 @@ import '../theme/app_theme.dart';
 import '../utils/erp_error_handling.dart';
 import '../utils/html_text.dart';
 import '../widgets/log_visit_prompt.dart';
+import '../widgets/item_image_gallery.dart';
 import '../widgets/search_picker.dart';
 import '../widgets/swipe_to_confirm_button.dart';
 import 'all_sales_orders_screen.dart';
@@ -224,7 +225,9 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Could not determine your territories. Check your internet connection.'),
+          content: Text(
+            'Could not determine your territories. Check your internet connection.',
+          ),
         ),
       );
       return;
@@ -420,7 +423,8 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
         }
       }
     } catch (e) {
-      _creditLimitStatus = 'Could not connect to the server while loading customer data: $e';
+      _creditLimitStatus =
+          'Could not connect to the server while loading customer data: $e';
       _priceListStatus = _creditLimitStatus;
     }
 
@@ -449,7 +453,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                 : [
                     ['item_name', 'like', '%$query%'],
                   ],
-            fields: const ['name', 'item_name'],
+            fields: const ['name', 'item_name', 'image'],
             limit: 20,
           ),
           searchFilter: (row) {
@@ -462,14 +466,20 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
             return true;
           },
         );
-        return list
-            .map(
-              (i) => PickedRecord(
-                name: i['name'] as String,
-                label: (i['item_name'] as String?) ?? i['name'] as String,
-              ),
-            )
-            .toList();
+        return list.map((item) {
+          final code = item['name'] as String;
+          final name = (item['item_name'] as String?) ?? code;
+          return PickedRecord(
+            name: code,
+            label: name,
+            onAccessoryTap: (pickerContext) => showItemImageGallery(
+              pickerContext,
+              itemCode: code,
+              itemName: name,
+              primaryImageUrl: item['image'] as String?,
+            ),
+          );
+        }).toList();
       },
     );
 
@@ -488,21 +498,25 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
     final priceList = _priceList;
     if (priceList == null) {
       setState(
-        () =>
-            line.priceStatus = _priceListStatus ?? 'No price list selected',
+        () => line.priceStatus = _priceListStatus ?? 'No price list selected',
       );
       return;
     }
     try {
-      final prices = await ErpService.getList(
-        'Item Price',
-        filters: [
-          ['item_code', '=', line.itemCode],
-          ['price_list', '=', priceList],
-        ],
-        fields: const ['price_list_rate'],
-        limit: 1,
+      final cachedPrices = await CacheService.getListCached(
+        cacheDoctype: 'Item Price',
+        cacheKey: '$priceList|${line.itemCode}',
+        fetch: () => ErpService.getList(
+          'Item Price',
+          filters: [
+            ['item_code', '=', line.itemCode],
+            ['price_list', '=', priceList],
+          ],
+          fields: const ['price_list_rate'],
+          limit: 1,
+        ),
       );
+      final prices = cachedPrices.rows;
       if (!mounted) return;
       if (prices.isEmpty) {
         setState(
@@ -514,7 +528,8 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
       final rate = prices.first['price_list_rate'] as num?;
       if (rate == null) {
         setState(
-          () => line.priceStatus = 'A price is recorded for this item, but the value is empty',
+          () => line.priceStatus =
+              'A price is recorded for this item, but the value is empty',
         );
       } else {
         setState(() {
@@ -524,7 +539,10 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
       }
     } catch (e) {
       if (mounted) {
-        setState(() => line.priceStatus = 'Could not connect while loading the price: $e');
+        setState(
+          () => line.priceStatus =
+              'Could not connect while loading the price: $e',
+        );
       }
     }
   }
@@ -694,7 +712,8 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
         result.name,
       );
       if (template.isEmpty) {
-        _paymentScheduleStatus = 'Could not load template details from the server';
+        _paymentScheduleStatus =
+            'Could not load template details from the server';
       } else if (!template.containsKey('terms')) {
         _paymentScheduleStatus =
             'Payment schedule details are not available to your account. They may be restricted by server permissions.';
@@ -711,7 +730,8 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
         }
       }
     } catch (e) {
-      _paymentScheduleStatus = 'Could not connect while loading template details: $e';
+      _paymentScheduleStatus =
+          'Could not connect while loading template details: $e';
     }
     if (mounted) setState(() => _loadingPaymentSchedule = false);
   }
@@ -1113,7 +1133,9 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
         setState(_resetOrderForm);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Offline. Order saved and will be sent automatically.'),
+            content: Text(
+              'Offline. Order saved and will be sent automatically.',
+            ),
           ),
         );
         return true;
@@ -1166,7 +1188,9 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Connection unavailable. Changes will be saved automatically.'),
+              content: Text(
+                'Connection unavailable. Changes will be saved automatically.',
+              ),
             ),
           );
           Navigator.of(context).pop();
@@ -1181,7 +1205,9 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
         setState(_resetOrderForm);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Connection unavailable. Order saved and will be sent automatically.'),
+            content: Text(
+              'Connection unavailable. Order saved and will be sent automatically.',
+            ),
           ),
         );
         return true;
@@ -1265,7 +1291,8 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                           child: Text(
                             _creditLimit != null
                                 ? 'Credit limit: ${_creditLimit!.toStringAsFixed(0)} EGP'
-                                : (_creditLimitStatus ?? 'Credit limit unavailable'),
+                                : (_creditLimitStatus ??
+                                      'Credit limit unavailable'),
                             style: const TextStyle(
                               color: AppColors.midGray,
                               fontSize: 12,
@@ -1428,7 +1455,8 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                                 Text(
                                   line.unitPrice != null
                                       ? 'Price: ${line.unitPrice} × ${line.qty.toStringAsFixed(0)} = ${(line.unitPrice! * line.qty).toStringAsFixed(2)} EGP'
-                                      : (line.priceStatus ?? 'Price unavailable'),
+                                      : (line.priceStatus ??
+                                            'Price unavailable'),
                                   style: const TextStyle(
                                     color: AppColors.midGray,
                                     fontSize: 11.5,

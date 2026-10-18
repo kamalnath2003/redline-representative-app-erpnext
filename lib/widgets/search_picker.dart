@@ -12,6 +12,8 @@ class PickedRecord {
     required this.label,
     this.subtitle,
     this.enabled = true,
+    this.onAccessoryTap,
+    this.accessoryTooltip,
   });
 
   /// The DocType record's `name` (its ID) — what gets sent back to the API.
@@ -24,6 +26,10 @@ class PickedRecord {
 
   /// Disabled results stay visible to explain why they cannot be selected.
   final bool enabled;
+
+  /// Optional action shown as a compact trailing icon without selecting the row.
+  final Future<void> Function(BuildContext context)? onAccessoryTap;
+  final String? accessoryTooltip;
 }
 
 /// Full-screen searchable picker used for Customer/Item/Vehicle selection
@@ -262,6 +268,18 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
                       size: 20,
                     ),
                   ],
+                  if (record.onAccessoryTap != null)
+                    IconButton(
+                      tooltip:
+                          record.accessoryTooltip ?? 'View and sync images',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => record.onAccessoryTap!(context),
+                      icon: const Icon(
+                        Icons.image_outlined,
+                        color: AppColors.accent,
+                        size: 20,
+                      ),
+                    ),
                 ],
               ),
             ),

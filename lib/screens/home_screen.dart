@@ -70,7 +70,12 @@ const _quickActions = [
     'Pending Approvals',
     route: '/pending-approvals',
   ),
-  _QuickAction(Icons.history_rounded, 'Stock Movement', route: '/stock-movement'),
+  _QuickAction(
+    Icons.history_rounded,
+    'Stock Movement',
+    route: '/stock-movement',
+  ),
+  _QuickAction(Icons.inventory_2_rounded, 'Items', route: '/items'),
 ];
 
 /// Shown instead of [_quickActions] for a `WF - Region Manager` — full
@@ -80,7 +85,11 @@ const _quickActions = [
 /// subset assuming managers only approve/oversee; the business explicitly
 /// wants managers able to do everything a rep can do, not just review it.
 const _managerQuickActions = [
-  _QuickAction(Icons.groups_rounded, 'Team Dashboard', route: '/team-dashboard'),
+  _QuickAction(
+    Icons.groups_rounded,
+    'Team Dashboard',
+    route: '/team-dashboard',
+  ),
   ..._quickActions,
 ];
 
@@ -349,7 +358,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showComingSoon() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('This screen is currently under development')),
+      const SnackBar(
+        content: Text('This screen is currently under development'),
+      ),
     );
   }
 

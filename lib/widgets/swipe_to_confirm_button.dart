@@ -6,10 +6,6 @@ import '../theme/app_theme.dart';
 /// Full-width "slide to confirm" control for sensitive/final actions
 /// (sending an invoice, submitting an order, confirming a collection).
 ///
-/// The app is RTL, so the handle starts on the right edge and the user
-/// drags it to the left to confirm — matching natural RTL reading/swipe
-/// direction rather than mirroring an LTR pattern.
-///
 /// [onConfirmed] resolves to the REAL outcome (`true`/`false`) of whatever
 /// network call it triggers — the button used to flip to its green
 /// "confirmed" state the instant the swipe gesture completed, regardless
@@ -85,7 +81,7 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
   late final AnimationController _shimmerController;
   Animation<double>? _snapAnimation;
 
-  double _progress = 0; // 0 = handle at start (right), 1 = reached end (left)
+  double _progress = 0; // 0 = leading edge, 1 = trailing edge
   bool _confirmed = false;
   bool _confirmedWasQueued = false;
   bool _confirming = false;
@@ -119,10 +115,10 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
     HapticFeedback.selectionClick();
   }
 
-  void _onDragUpdate(DragUpdateDetails details, double maxTravel) {
+  void _onDragUpdate(double deltaX, double maxTravel) {
     if (_locked || maxTravel <= 0) return;
     setState(() {
-      _progress = (_progress - details.delta.dx / maxTravel).clamp(0.0, 1.0);
+      _progress = (_progress + deltaX / maxTravel).clamp(0.0, 1.0);
     });
   }
 
@@ -200,6 +196,8 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
       builder: (context, constraints) {
         final trackWidth = constraints.maxWidth;
         final maxTravel = trackWidth - _handleSize - _trackPadding * 2;
+        final textDirection = Directionality.of(context);
+        final isRtl = textDirection == TextDirection.rtl;
         final handleOffset = _trackPadding + _progress * maxTravel;
         final textOpacity = (1 - _progress * 1.6).clamp(0.0, 1.0);
 
@@ -211,10 +209,17 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
 
         return Semantics(
           label: semanticsLabel,
-          hint: 'Drag the handle from left to right to confirm',
+          hint: isRtl
+              ? 'Drag the handle from right to left to confirm'
+              : 'Drag the handle from left to right to confirm',
           button: true,
           enabled: !_locked,
-          child: _buildTrack(handleOffset, textOpacity, maxTravel),
+          child: _buildTrack(
+            handleOffset,
+            textOpacity,
+            maxTravel,
+            textDirection,
+          ),
         );
       },
     );
@@ -232,18 +237,28 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
     double handleOffset,
     double textOpacity,
     double maxTravel,
+    TextDirection textDirection,
   ) {
+    final isRtl = textDirection == TextDirection.rtl;
     final showIdleLabel = !_confirmed && !_confirming && !_failed;
-    return Container(
-      height: widget.height,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: _trackColor,
-        borderRadius: BorderRadius.circular(widget.height / 2),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onHorizontalDragStart: _onDragStart,
+      onHorizontalDragUpdate: (details) {
+        final direction = isRtl ? -1.0 : 1.0;
+        _onDragUpdate(details.delta.dx * direction, maxTravel);
+      },
+      onHorizontalDragEnd: _onDragEnd,
+      child: Container(
+        height: widget.height,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: _trackColor,
+          borderRadius: BorderRadius.circular(widget.height / 2),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
           AnimatedOpacity(
             duration: const Duration(milliseconds: 150),
             opacity: showIdleLabel ? textOpacity : 0,
@@ -323,22 +338,21 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
             ),
           ),
           if (!_locked)
-            Positioned(
-              right: handleOffset + _handleSize + 10,
+            PositionedDirectional(
+              start: handleOffset + _handleSize + 10,
               child: IgnorePointer(
                 child: Opacity(
                   opacity: (1 - _progress * 2.5).clamp(0.0, 1.0),
-                  child: _ShimmerChevrons(controller: _shimmerController),
+                  child: _ShimmerChevrons(
+                    controller: _shimmerController,
+                    textDirection: textDirection,
+                  ),
                 ),
               ),
             ),
-          Positioned(
-            right: handleOffset,
-            child: GestureDetector(
-              onHorizontalDragStart: _onDragStart,
-              onHorizontalDragUpdate: (d) => _onDragUpdate(d, maxTravel),
-              onHorizontalDragEnd: _onDragEnd,
-              child: AnimatedContainer(
+          PositionedDirectional(
+            start: handleOffset,
+            child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 width: _handleSize,
                 height: _handleSize,
@@ -366,7 +380,9 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
                             ? Icons.check_rounded
                             : (_failed
                                   ? Icons.close_rounded
-                                  : Icons.chevron_right_rounded),
+                                      : (isRtl
+                                        ? Icons.chevron_left_rounded
+                                        : Icons.chevron_right_rounded)),
                         color: _confirmed
                             ? (_confirmedWasQueued
                                   ? AppColors.midGray
@@ -374,10 +390,10 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
                             : (_failed ? AppColors.accent : AppColors.white),
                         size: 28,
                       ),
-              ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -386,9 +402,13 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
 /// Three small chevrons that light up in sequence, hinting the drag
 /// direction with a continuous shimmer instead of a single static arrow.
 class _ShimmerChevrons extends StatelessWidget {
-  const _ShimmerChevrons({required this.controller});
+  const _ShimmerChevrons({
+    required this.controller,
+    required this.textDirection,
+  });
 
   final Animation<double> controller;
+  final TextDirection textDirection;
 
   static const _chevronCount = 3;
   static const _staggerStep = 0.18;
@@ -407,10 +427,12 @@ class _ShimmerChevrons extends StatelessWidget {
             final opacity = (1 - (phase * 2 - 1).abs()).clamp(0.15, 1.0);
             return Opacity(
               opacity: opacity,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 1),
                 child: Icon(
-                  Icons.chevron_right_rounded,
+                  textDirection == TextDirection.rtl
+                      ? Icons.chevron_left_rounded
+                      : Icons.chevron_right_rounded,
                   color: AppColors.white,
                   size: 16,
                 ),

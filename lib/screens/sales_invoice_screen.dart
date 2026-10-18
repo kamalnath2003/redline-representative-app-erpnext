@@ -13,6 +13,7 @@ import '../theme/app_theme.dart';
 import '../utils/erp_error_handling.dart';
 import '../utils/html_text.dart';
 import '../widgets/log_visit_prompt.dart';
+import '../widgets/item_image_gallery.dart';
 import '../widgets/search_picker.dart';
 import '../widgets/swipe_to_confirm_button.dart';
 import 'all_sales_invoices_screen.dart';
@@ -259,7 +260,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Could not determine your territories. Check your internet connection.'),
+          content: Text(
+            'Could not determine your territories. Check your internet connection.',
+          ),
         ),
       );
       return;
@@ -437,7 +440,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         }
       }
     } catch (e) {
-      _creditLimitStatus = 'Could not connect to the server while loading customer data: $e';
+      _creditLimitStatus =
+          'Could not connect to the server while loading customer data: $e';
       _priceListStatus = _creditLimitStatus;
     }
 
@@ -466,7 +470,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                 : [
                     ['item_name', 'like', '%$query%'],
                   ],
-            fields: const ['name', 'item_name'],
+            fields: const ['name', 'item_name', 'image'],
             limit: 20,
           ),
           searchFilter: (row) {
@@ -479,14 +483,20 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             return true;
           },
         );
-        return list
-            .map(
-              (i) => PickedRecord(
-                name: i['name'] as String,
-                label: (i['item_name'] as String?) ?? i['name'] as String,
-              ),
-            )
-            .toList();
+        return list.map((item) {
+          final code = item['name'] as String;
+          final name = (item['item_name'] as String?) ?? code;
+          return PickedRecord(
+            name: code,
+            label: name,
+            onAccessoryTap: (pickerContext) => showItemImageGallery(
+              pickerContext,
+              itemCode: code,
+              itemName: name,
+              primaryImageUrl: item['image'] as String?,
+            ),
+          );
+        }).toList();
       },
     );
     if (result == null) return;
@@ -532,18 +542,13 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   /// بيرجع true لو المندوب اختار لوط فعلاً، false لو ألغى أو مفيش أي لوط
   /// متاح خالص (رسالة خطأ واضحة في الحالة التانية بدل صف صامت بلا لوط).
   Future<bool> _pickBatchForLine(_InvoiceLine line) async {
-    final warehouses = await ErpService.getCurrentRepSellingWarehouses();
+    var warehouses = line.warehouse == null
+        ? await ErpService.getCurrentRepSellingWarehouses()
+        : [line.warehouse!];
     if (warehouses.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'This item requires a batch number, but no warehouse is linked to your account',
-            ),
-          ),
-        );
-      }
-      return false;
+      await _pickWarehouseForLine(line);
+      if (line.warehouse == null) return false;
+      warehouses = [line.warehouse!];
     }
 
     final batches = <Map<String, dynamic>>[];
@@ -649,14 +654,13 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   }
 
   Future<bool> _pickSerialsForLine(_InvoiceLine line) async {
-    final warehouses = await ErpService.getCurrentRepSellingWarehouses();
-    if (warehouses.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No vehicle warehouse is linked to this representative')),
-        );
-      }
-      return false;
+    var warehouses = await ErpService.getCurrentRepSellingWarehouses();
+    if (line.warehouse != null) {
+      warehouses = [line.warehouse!];
+    } else if (warehouses.isEmpty) {
+      await _pickWarehouseForLine(line);
+      if (line.warehouse == null) return false;
+      warehouses = [line.warehouse!];
     }
     final warehouse = line.warehouse ?? warehouses.first;
     final rows = await ErpService.getAvailableSerialNumbers(
@@ -808,21 +812,25 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     final priceList = _priceList;
     if (priceList == null) {
       setState(
-        () =>
-            line.priceStatus = _priceListStatus ?? 'No price list selected',
+        () => line.priceStatus = _priceListStatus ?? 'No price list selected',
       );
       return;
     }
     try {
-      final prices = await ErpService.getList(
-        'Item Price',
-        filters: [
-          ['item_code', '=', line.itemCode],
-          ['price_list', '=', priceList],
-        ],
-        fields: const ['price_list_rate'],
-        limit: 1,
+      final cachedPrices = await CacheService.getListCached(
+        cacheDoctype: 'Item Price',
+        cacheKey: '$priceList|${line.itemCode}',
+        fetch: () => ErpService.getList(
+          'Item Price',
+          filters: [
+            ['item_code', '=', line.itemCode],
+            ['price_list', '=', priceList],
+          ],
+          fields: const ['price_list_rate'],
+          limit: 1,
+        ),
       );
+      final prices = cachedPrices.rows;
       if (!mounted) return;
       if (prices.isEmpty) {
         setState(
@@ -834,7 +842,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       final rate = prices.first['price_list_rate'] as num?;
       if (rate == null) {
         setState(
-          () => line.priceStatus = 'A price is recorded for this item, but the value is empty',
+          () => line.priceStatus =
+              'A price is recorded for this item, but the value is empty',
         );
       } else {
         setState(() {
@@ -844,23 +853,18 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       }
     } catch (e) {
       if (mounted) {
-        setState(() => line.priceStatus = 'Could not connect while loading the price: $e');
+        setState(
+          () => line.priceStatus =
+              'Could not connect while loading the price: $e',
+        );
       }
     }
   }
 
   Future<void> _pickWarehouseForLine(_InvoiceLine line) async {
-    // Invoices may only consume confirmed stock in the rep's car warehouse.
-    // Transit stock remains visible in stock movement, never in selling.
     final sellingWarehouses = await ErpService.getCurrentRepSellingWarehouses();
     if (!mounted) return;
-    if (sellingWarehouses.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No vehicle warehouse is linked to this representative')),
-      );
-      return;
-    }
-    setState(() => line.warehouse = sellingWarehouses.first);
+    final restrictToSellingWarehouses = sellingWarehouses.isNotEmpty;
     final result = await showSearchPicker(
       context: context,
       title: 'Select Warehouse',
@@ -871,7 +875,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           fetch: () => ErpService.getList(
             'Warehouse',
             filters: [
-              ['name', 'in', sellingWarehouses],
+              if (restrictToSellingWarehouses)
+                ['name', 'in', sellingWarehouses],
               ['disabled', '=', 0],
               ['is_group', '=', 0],
               if (query.isNotEmpty) ['warehouse_name', 'like', '%$query%'],
@@ -881,7 +886,10 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           ),
           searchFilter: (row) {
             final name = (row['name'] ?? '').toString().toLowerCase();
-            if (!sellingWarehouses.contains(row['name'])) return false;
+            if (restrictToSellingWarehouses &&
+                !sellingWarehouses.contains(row['name'])) {
+              return false;
+            }
             final wName = (row['warehouse_name'] ?? '')
                 .toString()
                 .toLowerCase();
@@ -1015,7 +1023,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         result.name,
       );
       if (template.isEmpty) {
-        _paymentScheduleStatus = 'Could not load template details from the server';
+        _paymentScheduleStatus =
+            'Could not load template details from the server';
       } else if (!template.containsKey('terms')) {
         _paymentScheduleStatus =
             'Payment schedule details are not available to your account. They may be restricted by server permissions.';
@@ -1032,7 +1041,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         }
       }
     } catch (e) {
-      _paymentScheduleStatus = 'Could not connect while loading template details: $e';
+      _paymentScheduleStatus =
+          'Could not connect while loading template details: $e';
     }
     if (mounted) setState(() => _loadingPaymentSchedule = false);
   }
@@ -1389,13 +1399,10 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   Future<bool> _submit() async {
     if (_customer == null || _lines.isEmpty) return false;
     final sellingWarehouses = await ErpService.getCurrentRepSellingWarehouses();
-    if (sellingWarehouses.isEmpty) {
-      setState(() => _error = 'No vehicle warehouse is linked to this representative');
-      return false;
-    }
-    final sellingWarehouse = sellingWarehouses.first;
-    for (final line in _lines) {
-      line.warehouse = sellingWarehouse;
+    if (sellingWarehouses.isNotEmpty) {
+      for (final line in _lines) {
+        line.warehouse ??= sellingWarehouses.first;
+      }
     }
 
     final batchTotals = <String, double>{};
@@ -1545,7 +1552,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         setState(_resetInvoiceForm);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Offline. Invoice saved and will be sent automatically.'),
+            content: Text(
+              'Offline. Invoice saved and will be sent automatically.',
+            ),
           ),
         );
         return true;
@@ -1578,9 +1587,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         if (!mounted) return true;
         context.push(documentDetailRoute('Sales Invoice', createdName));
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Invoice saved successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invoice saved successfully')),
+        );
       }
       return true;
     } catch (e) {
@@ -1603,7 +1612,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Connection unavailable. Changes will be saved automatically.'),
+              content: Text(
+                'Connection unavailable. Changes will be saved automatically.',
+              ),
             ),
           );
           Navigator.of(context).pop();
@@ -1618,7 +1629,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         setState(_resetInvoiceForm);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Connection unavailable. Invoice saved and will be sent automatically.'),
+            content: Text(
+              'Connection unavailable. Invoice saved and will be sent automatically.',
+            ),
           ),
         );
         return true;
@@ -1701,9 +1714,11 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                     ignoring: !_canSubmit,
                     child: SwipeToConfirmButton(
                       label: _isReturn
-                            ? 'Swipe to save return'
-                            : 'Swipe to save invoice',
-                          confirmedLabel: 'Saved',
+                          ? 'Swipe to save return'
+                          : 'Swipe to save invoice',
+                      confirmedLabel: 'Saved',
+                      failedLabel:
+                          _error ?? 'Review the error above and try again',
                       onConfirmed: _submit,
                       wasQueued: () => _lastSubmitWasQueued,
                     ),
@@ -1781,10 +1796,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               else
                 TextButton(
                   onPressed: () => setState(() => _sourceDoc = null),
-                  child: const Text(
-                    'Unlink',
-                    style: TextStyle(fontSize: 12),
-                  ),
+                  child: const Text('Unlink', style: TextStyle(fontSize: 12)),
                 ),
             ],
           ),
@@ -2223,7 +2235,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           minLines: 3,
           maxLines: 8,
           decoration: const InputDecoration(
-            hintText: 'Enter notes here or edit the text after selecting a template',
+            hintText:
+                'Enter notes here or edit the text after selecting a template',
           ),
         ),
         if (_error != null) _errorRow(),
