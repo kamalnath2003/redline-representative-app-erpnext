@@ -1,0 +1,12 @@
+FROM frappe/erpnext:v16.50.0
+
+USER frappe
+WORKDIR /home/frappe/frappe-bench
+
+# Keep the logo in Frappe's public asset tree so the UI can use it without
+# changing API routes or depending on a file in a runtime container.
+COPY --chown=frappe:0 branding/RCD_logo.svg /home/frappe/frappe-bench/apps/frappe/frappe/public/images/rcd_logo.svg
+COPY --chown=frappe:0 branding/RCD_logo.svg /home/frappe/frappe-bench/apps/erpnext/erpnext/public/images/erpnext-logo.svg
+
+RUN bench get-app --branch develop https://github.com/dhwani-ris/frappe-mobile-control.git \
+    && bench build --app mobile_control
