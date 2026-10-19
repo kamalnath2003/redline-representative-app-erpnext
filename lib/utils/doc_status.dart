@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'english_ui_text.dart';
 
 /// Shared status/color resolution for any ERPNext document — workflow
 /// state first (if this DocType has an active workflow), then a plain
@@ -12,12 +13,18 @@ import '../theme/app_theme.dart';
 
   final workflowState = doc['workflow_state'] as String?;
   if (workflowState != null && workflowState.isNotEmpty) {
-    return (label: workflowState, color: AppColors.accent);
+    return (
+      label: englishUiText(workflowState, fallback: 'In progress'),
+      color: AppColors.accent,
+    );
   }
 
   final status = doc['status'] as String?;
   if (status != null && status.isNotEmpty) {
-    return (label: status, color: _colorForStatusText(status));
+    return (
+      label: englishUiText(status, fallback: 'Status'),
+      color: _colorForStatusText(status),
+    );
   }
 
   final docstatus = doc['docstatus'];
@@ -38,7 +45,7 @@ import '../theme/app_theme.dart';
 /// track next is whether the customer has PAID, not the now-finished
 /// approval chain — this reads the standard ERPNext `status` field (which
 /// already resolves to "Unpaid"/"Overdue"/"Partly Paid"/"Paid"/etc. once
-/// submitted, confirmed field, not custom) and maps it to Arabic. Returns
+/// submitted, confirmed field, not custom) and displays it in English. Returns
 /// null while the invoice hasn't been submitted yet (`docstatus != 1`) —
 /// callers should fall back to [docStatusInfo] in that case, since payment
 /// status is meaningless before approval.
@@ -67,7 +74,10 @@ import '../theme/app_theme.dart';
     return (label: status, color: AppColors.midGray);
   }
   if (status.isEmpty) return null;
-  return (label: status, color: AppColors.midGray);
+  return (
+    label: englishUiText(status, fallback: 'Payment status'),
+    color: AppColors.midGray,
+  );
 }
 
 Color _colorForStatusText(String status) {

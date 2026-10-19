@@ -3,16 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
-import '../local_db/sync_job_type.dart';
+import '../services/customer_visit_service.dart';
 import '../services/erp_service.dart';
-import '../services/sync_engine.dart';
-import '../services/sync_status_service.dart';
 import '../theme/app_theme.dart';
 
 /// بعد إرسال طلبية/فاتورة بنجاح — يسأل المندوب هل يسجل زيارة لنفس العميل،
 /// ولو "نعم" ياخد ملاحظة اختيارية، يلتقط GPS best-effort (زي
-/// [CustomerVisitsScreen])، وينشئ `Customer Visit` مربوطة بالمستند اللي
-/// اتبعت (`reference_doctype`/`reference_name`). فشل تسجيل الزيارة نفسها
+/// [CustomerVisitsScreen])، وينشئ `Customer Visit` وقد يربطها بالمستند
+/// المُنشأ (`reference_doctype`/`reference_name`). فشل تسجيل الزيارة نفسها
 /// (لو حصل) ميرجعش المستند الأساسي أو يوقف تدفق الشاشة — هو إضافة، مش شرط.
 Future<void> promptLogVisit(
   BuildContext context, {
@@ -20,7 +18,9 @@ Future<void> promptLogVisit(
   String? territory,
   required String referenceDoctype,
   String? referenceName,
-  String visitType = 'زيارة',
+  int? referenceJobId,
+  bool includeReference = true,
+  String visitType = 'Visit',
   String? receiptNumber,
 }) async {
   final wantsToLog = await showDialog<bool>(
@@ -75,67 +75,53 @@ Future<void> promptLogVisit(
   notesController.dispose();
   if (confirmed != true) return;
 
-  Map<String, dynamic>? visitBody;
   try {
     final location = await _captureVisitLocation();
     if (location == null) {
       if (context.mounted) await _showLocationRequired(context);
       return;
     }
-    final salesPerson = await ErpService.resolveCurrentSalesPerson();
-    visitBody = <String, dynamic>{
+    final visitBody = <String, dynamic>{
       'customer': customer,
       'visit_type': visitType,
       if (territory != null && territory.isNotEmpty) 'territory': territory,
-      'sales_person': ?salesPerson,
       if (notes.isNotEmpty) 'notes': notes,
       if (receiptNumber != null && receiptNumber.trim().isNotEmpty)
         'receipt_number': receiptNumber.trim(),
       'location': location,
-      if (referenceName != null && referenceName.isNotEmpty) ...{
+      if (includeReference &&
+          referenceName != null &&
+          referenceName.isNotEmpty) ...{
         'reference_doctype': referenceDoctype,
         'reference_name': referenceName,
+      } else if (includeReference && referenceJobId != null) ...{
+        'reference_doctype': referenceDoctype,
       },
     };
-    final queued = !SyncStatusService().isOnline;
-    if (queued) {
-      await SyncEngine().enqueue(
-        type: SyncJobType.customerVisitCreate,
-        payload: visitBody,
-      );
-    } else {
-      await ErpService.createDoc('Customer Visit', visitBody);
-    }
+    final result = await CustomerVisitService.save(
+      visitBody,
+      dependsOnJobId: referenceJobId,
+    );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            queued
+            result.queued
                 ? 'Visit saved and will be sent when you are back online'
                 : 'Visit logged successfully',
           ),
         ),
       );
     }
-  } on ErpException catch (e) {
-    if (e.isConnectivityFailure && visitBody != null) {
-      await SyncEngine().enqueue(
-        type: SyncJobType.customerVisitCreate,
-        payload: visitBody,
-      );
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Connection unavailable. Visit saved and will be sent automatically.'),
-          ),
-        );
-      }
-      return;
-    }
+  } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not log the visit, but the document was saved successfully.'),
+        SnackBar(
+          content: Text(
+            e is ErpException
+                ? 'The $referenceDoctype was saved, but the visit was not recorded: ${e.toString()}'
+                : 'The $referenceDoctype was saved, but the visit could not be saved locally. Please try again.',
+          ),
         ),
       );
     }

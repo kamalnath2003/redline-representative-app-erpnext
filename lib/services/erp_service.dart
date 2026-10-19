@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import 'auth_service.dart';
 import 'cache_service.dart';
+import '../utils/english_ui_text.dart';
 
 /// Same rationale as `AuthService._hardNetworkTimeout` â€” a Dart-level
 /// backstop in case the underlying socket hangs longer than Dio's own
@@ -29,7 +30,10 @@ class ErpException implements Exception {
   final bool sessionExpired;
 
   @override
-  String toString() => message;
+  String toString() => englishUiText(
+    message,
+    fallback: 'The ERP server returned an error. Please try again.',
+  );
 
   /// True for a network/timeout failure (no response ever came back) â€”
   /// the case an offline-capable screen should queue instead of showing a

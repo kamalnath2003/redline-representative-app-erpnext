@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/erp_service.dart';
+import 'english_ui_text.dart';
 
 /// Shared handling for errors thrown by [ErpService] calls across screens.
 ///
@@ -15,7 +16,10 @@ String? handleErpError(BuildContext context, Object error) {
       context.go('/auth');
       return null;
     }
-    return error.message;
+    return englishUiText(
+      error.message,
+      fallback: 'The ERP server returned an error. Please try again.',
+    );
   }
   return 'An unexpected error occurred. Please try again later.';
 }

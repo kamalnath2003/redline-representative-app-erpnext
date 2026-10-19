@@ -5,6 +5,7 @@ import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/doc_status.dart';
+import '../utils/english_ui_text.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/row_sync_icon.dart';
 import 'document_detail_screen.dart';
@@ -177,7 +178,7 @@ class _AllSalesInvoicesScreenState extends State<AllSalesInvoicesScreen> {
                     for (final state in _workflowStates) ...[
                       const SizedBox(width: 6),
                       _filterChip(
-                        label: state,
+                        label: englishUiText(state, fallback: 'Workflow state'),
                         selected: _stateFilter == state,
                         onTap: () => setState(() => _stateFilter = state),
                       ),

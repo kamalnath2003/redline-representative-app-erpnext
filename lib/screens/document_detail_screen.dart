@@ -18,6 +18,7 @@ import '../services/sync_status_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/doc_status.dart';
 import '../utils/erp_error_handling.dart';
+import '../utils/english_ui_text.dart';
 import '../utils/html_text.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/log_visit_prompt.dart';
@@ -350,7 +351,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
-        title: Text(action),
+        title: Text(englishUiText(action, fallback: 'Workflow action')),
         content: const Text('Are you sure you want to perform this action?'),
         actions: [
           TextButton(
@@ -389,7 +390,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Offline. "$action" will be completed automatically when you reconnect.',
+            'Offline. "${englishUiText(action, fallback: 'Workflow action')}" will be completed automatically when you reconnect.',
           ),
         ),
       );
@@ -408,7 +409,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('"$action" completed successfully')));
+      ).showSnackBar(
+        SnackBar(
+          content: Text(
+            '"${englishUiText(action, fallback: 'Workflow action')}" completed successfully',
+          ),
+        ),
+      );
       if (updated.isNotEmpty) setState(() => _doc = updated);
       await _loadTransitions();
     } catch (e) {
@@ -978,7 +985,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           territory: _doc?['territory']?.toString(),
           referenceDoctype: 'Payment Entry',
           referenceName: createdName,
-          visitType: 'تحصيل',
+          visitType: 'Collection',
           receiptNumber: receiptNumber,
         );
       }
@@ -1868,8 +1875,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   // "إعادة إرسال للاعتماد" after a revision request), never
                   // a hardcoded "send" string.
                   label: _transitions.isEmpty
-                        ? 'Swipe to submit receipt'
-                        : 'Swipe to ${_transitions.first['action'] ?? 'submit'}',
+                      ? 'Swipe to submit receipt'
+                      : 'Swipe to ${englishUiText(_transitions.first['action']?.toString() ?? 'submit', fallback: 'continue')}',
                       confirmedLabel: 'Submitted',
                   onConfirmed: _sendDocument,
                 ),
@@ -1964,7 +1971,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   onPressed: _applyingAction
                       ? null
                       : () => _applyAction(action),
-                  child: Text(action),
+                  child: Text(englishUiText(action, fallback: 'Workflow action')),
                 );
               }).toList(),
             ),
@@ -2810,7 +2817,7 @@ class _WorkflowStepper extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    states[i],
+                    englishUiText(states[i], fallback: 'Step ${i + 1}'),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

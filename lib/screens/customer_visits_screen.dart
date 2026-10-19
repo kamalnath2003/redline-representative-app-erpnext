@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
-import '../local_db/sync_job_type.dart';
+import '../services/cache_service.dart';
+import '../services/customer_visit_service.dart';
 import '../services/erp_service.dart';
-import '../services/sync_engine.dart';
 import '../services/sync_status_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/erp_error_handling.dart';
@@ -519,16 +519,17 @@ class _LogVisitSheet extends StatefulWidget {
   State<_LogVisitSheet> createState() => _LogVisitSheetState();
 }
 
-const _visitTypes = ['زيارة', 'تحصيل', 'تنشيط'];
+const _visitTypes = ['Visit', 'Collection', 'Activation', 'Sales Order Taken'];
 const _visitTypeLabels = {
-  'زيارة': 'Visit',
-  'تحصيل': 'Collection',
-  'تنشيط': 'Activation',
+  'Visit': 'Visit',
+  'Collection': 'Collection',
+  'Activation': 'Activation',
+  'Sales Order Taken': 'Sales Order Taken',
 };
 
 class _LogVisitSheetState extends State<_LogVisitSheet> {
   PickedRecord? _customer;
-  String _visitType = 'زيارة';
+  String _visitType = 'Visit';
   final _notesController = TextEditingController();
   final _receiptController = TextEditingController();
   bool _submitting = false;
@@ -550,60 +551,145 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
   }
 
   Future<void> _pickCustomer() async {
-    List<String> territories;
+    List<Map<String, dynamic>> cachedCustomers = const [];
     try {
-      territories = await ErpService.getExpandedUserTerritories();
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not determine your territories. Check your internet connection.'),
-        ),
+      final cached = await CacheService.readCached(
+        'Customer_master',
+        'master',
       );
-      return;
+      cachedCustomers = cached?.rows ?? const [];
+    } catch (_) {
+      // A cache read failure must not prevent a live customer search.
     }
     if (!mounted) return;
+
+    var territories = cachedCustomers
+        .map((row) => row['territory']?.toString() ?? '')
+        .where((territory) => territory.isNotEmpty)
+        .toSet()
+        .toList();
+    Future<List<String>>? territoriesFuture;
+    Future<List<String>> loadTerritories() {
+      if (!SyncStatusService().isOnline) return Future.value(territories);
+      return territoriesFuture ??= ErpService.getExpandedUserTerritories()
+          .then((loaded) {
+            territories = loaded;
+            return loaded;
+          })
+          .catchError((Object _) => territories);
+    }
+
     final result = await showSearchPicker(
       context: context,
       title: 'Select Customer',
       hintText: 'Search customers...',
       search: (query) async {
+        final cached = await CacheService.readCached(
+          'Customer_master',
+          'master',
+        );
+        return _customerPickerRecords(
+          cached?.rows ?? const <Map<String, dynamic>>[],
+          query,
+          territories,
+        );
+      },
+      backgroundSearch: (query) async {
+        if (!SyncStatusService().isOnline) {
+          final cached = await CacheService.readCached(
+            'Customer_master',
+            'master',
+          );
+          return _customerPickerRecords(
+            cached?.rows ?? const <Map<String, dynamic>>[],
+            query,
+            territories,
+          );
+        }
+
+        final territoryList = await loadTerritories();
         final filters = <List<dynamic>>[
           if (query.isNotEmpty) ['customer_name', 'like', '%$query%'],
-          if (territories.length == 1)
-            ['territory', '=', territories.first]
-          else if (territories.isNotEmpty)
-            ['territory', 'in', territories],
+          if (territoryList.length == 1)
+            ['territory', '=', territoryList.first]
+          else if (territoryList.isNotEmpty)
+            ['territory', 'in', territoryList],
         ];
-        final list = await ErpService.getList(
-          'Customer',
-          filters: filters.isEmpty ? null : filters,
-          fields: const [
-            'name',
-            'customer_name',
-            'territory',
-            'disabled',
-            'is_frozen',
-          ],
-          limit: 20,
+        await CacheService.getSearchListCached(
+          cacheDoctype: 'Customer_master',
+          fetch: () => ErpService.getList(
+            'Customer',
+            filters: filters.isEmpty ? null : filters,
+            fields: const [
+              'name',
+              'customer_name',
+              'territory',
+              'disabled',
+              'is_frozen',
+            ],
+            limit: 50,
+          ),
+          searchFilter: (row) => _customerRowMatches(
+            row,
+            query,
+            territoryList,
+          ),
         );
-        return list
-            .map(
-              (c) => PickedRecord(
-                name: c['name'] as String,
-                label: (c['customer_name'] as String?) ?? c['name'] as String,
-                subtitle: ErpService.customerPickerSubtitle(
-                  c,
-                  prefix: c['territory'] as String?,
-                ),
-                enabled: ErpService.isCustomerSelectable(c),
-              ),
-            )
-            .toList();
+        final cached = await CacheService.readCached(
+          'Customer_master',
+          'master',
+        );
+        return _customerPickerRecords(
+          cached?.rows ?? const <Map<String, dynamic>>[],
+          query,
+          territoryList,
+        );
       },
     );
-    if (result != null) setState(() => _customer = result);
+    if (result != null && mounted) setState(() => _customer = result);
   }
+
+  bool _customerRowMatches(
+    Map<String, dynamic> row,
+    String query,
+    List<String> territoryList,
+  ) {
+    final name = (row['name'] ?? '').toString().toLowerCase();
+    final customerName = (row['customer_name'] ?? '').toString().toLowerCase();
+    final territory = (row['territory'] ?? '').toString();
+    final normalizedQuery = query.toLowerCase().trim();
+    if (normalizedQuery.isNotEmpty &&
+        !name.contains(normalizedQuery) &&
+        !customerName.contains(normalizedQuery)) {
+      return false;
+    }
+    if (territoryList.isNotEmpty && !territoryList.contains(territory)) {
+      return false;
+    }
+    return ErpService.isCustomerSelectable(row);
+  }
+
+  List<PickedRecord> _customerPickerRecords(
+    List<Map<String, dynamic>> rows,
+    String query,
+    List<String> territoryList,
+  ) => rows
+      .where((row) => _customerRowMatches(row, query, territoryList))
+      .take(300)
+      .map(
+        (customer) => PickedRecord(
+          name: customer['name'] as String,
+          label:
+              (customer['customer_name'] as String?) ??
+              customer['name'] as String,
+          subtitle: ErpService.customerPickerSubtitle(
+            customer,
+            prefix: customer['territory'] as String?,
+          ),
+          enabled: ErpService.isCustomerSelectable(customer),
+        ),
+      )
+      .toList();
 
   Future<String?> _captureLocationGeoJson() async {
     try {
@@ -660,7 +746,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
     // رقم الوصل إجباري لو الزيارة "تحصيل" — لا معنى لتسجيل تحصيل بدون
     // إثبات الوصل الورقي اللي اتحصّل بيه.
     final receipt = _receiptController.text.trim();
-    if (_visitType == 'تحصيل' && receipt.isEmpty) {
+    if (_visitType == 'Collection' && receipt.isEmpty) {
       setState(() => _receiptError = 'A receipt number is required to log a collection.');
       return false;
     }
@@ -670,9 +756,6 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
       _receiptError = null;
       _lastSubmitWasQueued = false;
     });
-    // Declared outside the `try` so `catch` can still reach it to enqueue
-    // an offline job.
-    Map<String, dynamic>? body;
     try {
       final location = await _captureLocationGeoJson();
       if (location == null) {
@@ -684,7 +767,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
         await _openRelevantLocationSettings();
         return false;
       }
-      body = <String, dynamic>{
+      final body = <String, dynamic>{
         'customer': customer.name,
         'visit_type': _visitType,
         if (receipt.isNotEmpty) 'receipt_number': receipt,
@@ -694,54 +777,21 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
           'notes': _notesController.text.trim(),
         'location': location,
       };
-
-      if (!SyncStatusService().isOnline) {
-        await SyncEngine().enqueue(
-          type: SyncJobType.customerVisitCreate,
-          payload: body,
-        );
-        _lastSubmitWasQueued = true;
-        if (!mounted) return true;
-        Navigator.of(context).pop(true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Offline. Visit saved and will be sent automatically.'),
-          ),
-        );
-        return true;
-      }
-
-      final salesPerson = await ErpService.resolveCurrentSalesPerson();
-      if (salesPerson != null) body['sales_person'] = salesPerson;
-      final created = await ErpService.createDoc('Customer Visit', body);
+      final result = await CustomerVisitService.save(body);
+      _lastSubmitWasQueued = result.queued;
       if (!mounted) return true;
       Navigator.of(context).pop(true);
-      final createdName = created['name'] as String?;
-      if (createdName != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Visit logged successfully')));
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.queued
+                ? 'Visit saved and will be sent automatically.'
+                : 'Visit logged successfully',
+          ),
+        ),
+      );
       return true;
     } catch (e) {
-      final capturedBody = body;
-      if (e is ErpException &&
-          e.isConnectivityFailure &&
-          capturedBody != null) {
-        await SyncEngine().enqueue(
-          type: SyncJobType.customerVisitCreate,
-          payload: capturedBody,
-        );
-        _lastSubmitWasQueued = true;
-        if (!mounted) return true;
-        Navigator.of(context).pop(true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Connection unavailable. Visit saved and will be sent automatically.'),
-          ),
-        );
-        return true;
-      }
       if (!mounted) return false;
       final message = handleErpError(context, e);
       if (message == null) return false;
@@ -845,7 +895,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
                 );
               }).toList(),
             ),
-            if (_visitType == 'تحصيل') ...[
+            if (_visitType == 'Collection') ...[
               const SizedBox(height: 12),
               TextFormField(
                 controller: _receiptController,

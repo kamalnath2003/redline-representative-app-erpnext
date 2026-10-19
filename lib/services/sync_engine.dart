@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 
 import '../local_db/app_database.dart';
 import '../local_db/sync_job_type.dart';
+import '../utils/english_ui_text.dart';
 import 'auth_service.dart';
 import 'erp_service.dart';
 import 'sync_status_service.dart';
@@ -69,6 +70,7 @@ class SyncEngine {
     required SyncJobType type,
     required Map<String, dynamic> payload,
     String? localPhotoPath,
+    int? dependsOnJobId,
   }) async {
     final id = await _db
         .into(_db.syncJobs)
@@ -77,6 +79,7 @@ class SyncEngine {
             jobType: type.name,
             payload: jsonEncode(payload),
             localPhotoPath: Value(localPhotoPath),
+            dependsOnJobId: Value(dependsOnJobId),
           ),
         );
     unawaited(drainQueue());
@@ -95,12 +98,28 @@ class SyncEngine {
     _draining = true;
     try {
       while (true) {
-        final job =
-            await (_db.select(_db.syncJobs)
-                  ..where((t) => t.status.equals(SyncJobStatus.pending.name))
-                  ..orderBy([(t) => OrderingTerm.asc(t.id)])
-                  ..limit(1))
-                .getSingleOrNull();
+        final pendingJobs = await (_db.select(_db.syncJobs)
+              ..where((t) => t.status.equals(SyncJobStatus.pending.name))
+              ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+            .get();
+        if (pendingJobs.isEmpty) break;
+
+        SyncJob? job;
+        for (final candidate in pendingJobs) {
+          final parentJobId = candidate.dependsOnJobId;
+          if (parentJobId == null) {
+            job = candidate;
+            break;
+          }
+          final parent = await (_db.select(_db.syncJobs)
+                ..where((t) => t.id.equals(parentJobId)))
+              .getSingleOrNull();
+          if (parent?.status == SyncJobStatus.success.name &&
+              parent?.resultName != null) {
+            job = candidate;
+            break;
+          }
+        }
         if (job == null) break;
 
         // Re-verify before EVERY job, not just once at the start — a
@@ -129,7 +148,10 @@ class SyncEngine {
       );
     } catch (e) {
       final message = e is ErpException
-          ? e.message
+          ? englishUiText(
+              e.message,
+              fallback: 'The ERP server returned an error. Please try again.',
+            )
           : 'An unexpected error occurred while retrying the upload';
       await (_db.update(_db.syncJobs)..where((t) => t.id.equals(job.id))).write(
         SyncJobsCompanion(
@@ -169,7 +191,7 @@ class SyncEngine {
       case 'paymentEntryCreate':
         return _replayPaymentEntryCreate(job, payload);
       case 'customerVisitCreate':
-        return _replayCustomerVisitCreate(payload);
+        return _replayCustomerVisitCreate(job, payload);
       case 'materialRequestCreate':
         return _replayMaterialRequestCreate(payload);
       case 'customerRegistrationCreate':
@@ -250,9 +272,29 @@ class SyncEngine {
   }
 
   Future<_ReplayResult> _replayCustomerVisitCreate(
+    SyncJob job,
     Map<String, dynamic> payload,
   ) async {
     final body = Map<String, dynamic>.from(payload);
+    final dependsOnJobId = job.dependsOnJobId;
+    if (dependsOnJobId != null) {
+      final parent = await (_db.select(_db.syncJobs)
+            ..where((t) => t.id.equals(dependsOnJobId)))
+          .getSingleOrNull();
+      final salesOrderName = parent?.resultName;
+      if (parent?.status != SyncJobStatus.success.name ||
+          salesOrderName == null ||
+          salesOrderName.isEmpty) {
+        throw const ErpException(
+          'The linked Sales Order has not synced yet.',
+        );
+      }
+      // Older queued prompts may already contain a reference_doctype. Keep
+      // that linkage for those jobs; the Log Visit tile flow stores no link.
+      if (body['reference_doctype'] != null) {
+        body['reference_name'] = salesOrderName;
+      }
+    }
     final salesPerson = await ErpService.resolveCurrentSalesPerson();
     if (salesPerson != null) body['sales_person'] = salesPerson;
     final created = await ErpService.createDoc('Customer Visit', body);

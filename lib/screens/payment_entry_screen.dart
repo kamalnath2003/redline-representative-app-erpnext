@@ -514,7 +514,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
             customer: submittedCustomer.name,
             territory: submittedCustomer.subtitle,
             referenceDoctype: 'Payment Entry',
-            visitType: 'تحصيل',
+            visitType: 'Collection',
             receiptNumber: submittedReceipt,
           );
         }
@@ -561,7 +561,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
           territory: submittedCustomer.subtitle,
           referenceDoctype: 'Payment Entry',
           referenceName: createdName,
-          visitType: 'تحصيل',
+          visitType: 'Collection',
           receiptNumber: submittedReceipt,
         );
       }
@@ -599,7 +599,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
             customer: submittedCustomer.name,
             territory: submittedCustomer.subtitle,
             referenceDoctype: 'Payment Entry',
-            visitType: 'تحصيل',
+            visitType: 'Collection',
             receiptNumber: submittedReceipt,
           );
         }

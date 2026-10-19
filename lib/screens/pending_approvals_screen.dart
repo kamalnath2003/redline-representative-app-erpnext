@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/english_ui_text.dart';
 import '../widgets/row_sync_icon.dart';
 import 'document_detail_screen.dart';
 
@@ -331,7 +332,9 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                   children: _states.map((state) {
                     final selected = state == _selectedState;
                     return ChoiceChip(
-                      label: Text(state),
+                      label: Text(
+                        englishUiText(state, fallback: 'Workflow state'),
+                      ),
                       selected: selected,
                       onSelected: (_) => _pickState(state),
                       selectedColor: AppColors.accent,

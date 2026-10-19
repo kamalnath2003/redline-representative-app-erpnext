@@ -24,7 +24,7 @@ const _pages = [
   ),
   _OnboardPage(
     Icons.sync_rounded,
-    'Always connected to ERPNext',
+    'Always connected to RCD ERP',
     'Your data syncs directly with your company’s ERP system.',
   ),
 ];

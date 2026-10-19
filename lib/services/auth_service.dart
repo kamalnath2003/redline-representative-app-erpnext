@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../local_db/app_database.dart';
+import '../utils/english_ui_text.dart';
 import 'secure_store.dart';
 
 /// Belt-and-braces on top of Dio's own connect/receive timeouts: on some
@@ -44,7 +45,10 @@ class AuthException implements Exception {
   final bool accessRestricted;
 
   @override
-  String toString() => message;
+  String toString() => englishUiText(
+    message,
+    fallback: 'Sign-in failed. Please check your details and try again.',
+  );
 }
 
 class AuthResult {

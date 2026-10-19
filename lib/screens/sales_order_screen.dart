@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -13,7 +14,6 @@ import '../services/sync_status_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/erp_error_handling.dart';
 import '../utils/html_text.dart';
-import '../widgets/log_visit_prompt.dart';
 import '../widgets/item_image_gallery.dart';
 import '../widgets/search_picker.dart';
 import '../widgets/swipe_to_confirm_button.dart';
@@ -115,13 +115,6 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
   String? _paymentScheduleStatus;
   String? _outstandingStatus;
   String? _locationStatus;
-
-  /// Set alongside [_locationStatus] whenever the failure is something the
-  /// user can actually go fix from a system settings screen (service off,
-  /// permission permanently denied) — null for transient failures (timeout,
-  /// a generic exception) where retrying in-place is the only sensible
-  /// option. Read by [_ensureLocationCaptured]'s blocking dialog.
-  Future<void> Function()? _locationFix;
 
   bool _loadingPartyDetails = false;
   bool _openingCustomerPicker = false;
@@ -965,20 +958,12 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
     }
   }
 
-  /// Device location, sent as a plain maps URL rather than a GeoJSON
-  /// Geolocation value — per explicit instruction, a Client Script on the
-  /// server reads `custom_location_url` and populates the real Geolocation
-  /// field (`custom_location_map`) itself, so this app's job is just to
-  /// produce a URL, not a GeoJSON shape. Mandatory as of this round — see
-  /// [_ensureLocationCaptured], which blocks submission until this
-  /// succeeds. Sets [_locationStatus] with the exact reason on every path,
-  /// and [_locationFix] to whatever system-settings action (if any) would
-  /// actually fix it.
-  Future<String?> _captureLocationUrl() async {
+  /// Captures a GeoJSON Point for the optional Sales Order Geolocation field.
+  /// If location is unavailable, the order can still be saved normally.
+  Future<String?> _captureOrderLocationGeoJson() async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
         _locationStatus = 'Location services (GPS) are turned off';
-        _locationFix = Geolocator.openLocationSettings;
         return null;
       }
 
@@ -988,13 +973,11 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
       }
       if (permission == LocationPermission.denied) {
         _locationStatus = 'Location permission was denied';
-        _locationFix = null;
         return null;
       }
       if (permission == LocationPermission.deniedForever) {
         _locationStatus =
             'Location permission is permanently denied. Enable it in app settings.';
-        _locationFix = Geolocator.openAppSettings;
         return null;
       }
 
@@ -1004,58 +987,26 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
           timeLimit: Duration(seconds: 10),
         ),
       );
-
       _locationStatus =
           'Location captured (${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)})';
-      _locationFix = null;
-      return 'https://www.google.com/maps?q=${position.latitude},${position.longitude}';
+      return jsonEncode({
+        'type': 'FeatureCollection',
+        'features': [
+          {
+            'type': 'Feature',
+            'properties': <String, dynamic>{},
+            'geometry': {
+              'type': 'Point',
+              'coordinates': [position.longitude, position.latitude],
+            },
+          },
+        ],
+      });
     } catch (e) {
-      _locationStatus = 'Error capturing location: $e';
-      _locationFix = null;
+      _locationStatus = 'Could not capture location: $e';
       return null;
     }
   }
-
-  /// GPS is now mandatory: no Android API lets an app silently force
-  /// location services on, so the closest achievable equivalent is to
-  /// block submission entirely and keep sending the user to the relevant
-  /// system settings screen until a real fix succeeds. Loops
-  /// [_captureLocationUrl] behind a non-dismissible dialog; returns null
-  /// only if the user explicitly cancels.
-  /// No confirmation dialog — GPS is mandatory, per explicit instruction,
-  /// so the app just takes the rep straight to the fix (opens the actual
-  /// system location/app-settings screen itself) instead of asking
-  /// permission to ask permission first. A lightweight SnackBar (not a
-  /// blocking modal) explains what's happening and offers a retry action
-  /// for once they've actually made the change and come back.
-  Future<String?> _ensureLocationCaptured() async {
-    while (true) {
-      final url = await _captureLocationUrl();
-      if (url != null) return url;
-      if (!mounted) return null;
-
-      final fix = _locationFix;
-      if (fix != null) await fix();
-      if (!mounted) return null;
-
-      final retry = Completer<void>();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_locationStatus ?? 'Enable location (GPS) to submit'),
-          duration: const Duration(seconds: 12),
-          action: SnackBarAction(
-            label: 'Try Again',
-            onPressed: () {
-              if (!retry.isCompleted) retry.complete();
-            },
-          ),
-        ),
-      );
-      await retry.future;
-      if (!mounted) return null;
-    }
-  }
-
   /// Always just saves a plain Draft — this app never advances a document
   /// past Draft at creation time any more. Sending it into the workflow (or
   /// a plain submit when there's no workflow) is a separate, explicit swipe
@@ -1098,11 +1049,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
     // block can't see a variable scoped to its own `try` block.
     Map<String, dynamic>? fields;
     try {
-      final locationUrl = await _ensureLocationCaptured();
-      if (locationUrl == null) {
-        if (mounted) setState(() => _submitting = false);
-        return false;
-      }
+      final orderLocation = await _captureOrderLocationGeoJson();
       if (mounted && _locationStatus != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1130,7 +1077,8 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
         if (_termsTemplate != null) 'tc_name': _termsTemplate!.name,
         if (_termsController.text.trim().isNotEmpty)
           'terms': _termsController.text.trim(),
-        'custom_location_url': locationUrl,
+        if (orderLocation != null)
+          'custom_order_taken_location': orderLocation,
       };
 
       final editDoc = widget.editDoc;
@@ -1191,23 +1139,12 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
         ];
       }
       final created = await ErpService.createDoc('Sales Order', fields);
-      final submittedCustomer = _customer;
 
       if (!mounted) return true;
       setState(_resetOrderForm);
 
       final createdName = created['name'] as String?;
       if (createdName != null) {
-        if (submittedCustomer != null) {
-          await promptLogVisit(
-            context,
-            customer: submittedCustomer.name,
-            territory: submittedCustomer.subtitle,
-            referenceDoctype: 'Sales Order',
-            referenceName: createdName,
-          );
-        }
-        if (!mounted) return true;
         context.push(documentDetailRoute('Sales Order', createdName));
       }
       return true;

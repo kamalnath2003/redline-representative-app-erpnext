@@ -8,6 +8,7 @@ import '../services/auth_service.dart';
 import '../services/prefetch_service.dart';
 import '../services/push_notification_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/english_ui_text.dart';
 import '../widgets/app_logo.dart';
 
 /// The login screen — also the app's re-entry point every time it's
@@ -138,12 +139,21 @@ class _AuthScreenState extends State<AuthScreen> {
       }
       if (!mounted) return;
       if (e.accessRestricted) {
-        context.go('/access-restricted', extra: e.message);
+        context.go(
+          '/access-restricted',
+          extra: englishUiText(
+            e.message,
+            fallback: 'This account is not authorized to use the app.',
+          ),
+        );
         return;
       }
       setState(() {
         _biometricBusy = false;
-        _errorText = e.message;
+        _errorText = englishUiText(
+          e.message,
+          fallback: 'Sign-in failed. Please try again.',
+        );
       });
     } catch (_) {
       if (!mounted) return;
@@ -190,12 +200,21 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
       if (e.accessRestricted) {
         setState(() => _isLoading = false);
-        context.go('/access-restricted', extra: e.message);
+        context.go(
+          '/access-restricted',
+          extra: englishUiText(
+            e.message,
+            fallback: 'This account is not authorized to use the app.',
+          ),
+        );
         return;
       }
       setState(() {
         _isLoading = false;
-        _errorText = e.message;
+        _errorText = englishUiText(
+          e.message,
+          fallback: 'Sign-in failed. Please try again.',
+        );
       });
     } catch (error, stackTrace) {
       debugPrint(
