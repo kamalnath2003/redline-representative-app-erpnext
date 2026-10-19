@@ -8,5 +8,15 @@ WORKDIR /home/frappe/frappe-bench
 COPY --chown=frappe:0 branding/RCD_logo.svg /home/frappe/frappe-bench/apps/frappe/frappe/public/images/rcd_logo.svg
 COPY --chown=frappe:0 branding/RCD_logo.svg /home/frappe/frappe-bench/apps/erpnext/erpnext/public/images/erpnext-logo.svg
 
+COPY custom_doctypes/geolocation_coordinates.js /tmp/geolocation_coordinates.js
+
 RUN bench get-app --branch develop https://github.com/dhwani-ris/frappe-mobile-control.git \
-    && bench build --app mobile_control
+    && mkdir -p /home/frappe/frappe-bench/apps/mobile_control/mobile_control/public/js \
+    && cp /tmp/geolocation_coordinates.js /home/frappe/frappe-bench/apps/mobile_control/mobile_control/public/js/geolocation_coordinates.js \
+    && printf '\n# RCD shared coordinates under Geolocation maps\ndoctype_js = globals().get("doctype_js", {})\ndoctype_js.update({"Sales Order": "public/js/geolocation_coordinates.js", "Customer Visit": "public/js/geolocation_coordinates.js"})\n' >> /home/frappe/frappe-bench/apps/mobile_control/mobile_control/hooks.py \
+    && bench build --app mobile_control \
+    && ln -sfn /home/frappe/frappe-bench/apps/mobile_control/mobile_control/public /home/frappe/frappe-bench/assets/mobile_control
+
+# Keep the field-rep visit DocType in this image so `bench migrate` installs
+# it on each site; the Flutter app creates Customer Visit documents directly.
+COPY custom_doctypes/customer_visit/ /home/frappe/frappe-bench/apps/mobile_control/mobile_control/mobile_control/doctype/customer_visit/

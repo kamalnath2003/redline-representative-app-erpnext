@@ -1,0 +1,139 @@
+{
+    "doctype":  "DocType",
+    "name":  "Customer Visit",
+    "module":  "Mobile Control",
+    "engine":  "InnoDB",
+    "autoname":  "naming_series:",
+    "track_changes":  1,
+    "title_field":  "customer",
+    "search_fields":  "customer, sales_person, visit_type",
+    "sort_field":  "visit_datetime",
+    "sort_order":  "DESC",
+    "field_order":  [
+                        "naming_series",
+                        "customer",
+                        "visit_datetime",
+                        "visit_type",
+                        "territory",
+                        "sales_person",
+                        "receipt_number",
+                        "location",
+                        "notes",
+                        "reference_doctype",
+                        "reference_name"
+                    ],
+    "fields":  [
+                   {
+                       "fieldname":  "naming_series",
+                       "label":  "Series",
+                       "fieldtype":  "Select",
+                       "options":  "CV-.YYYY.-.#####",
+                       "default":  "CV-.YYYY.-.#####",
+                       "reqd":  1,
+                       "hidden":  1
+                   },
+                   {
+                       "fieldname":  "customer",
+                       "label":  "Customer",
+                       "fieldtype":  "Link",
+                       "options":  "Customer",
+                       "reqd":  1,
+                       "in_list_view":  1,
+                       "in_standard_filter":  1
+                   },
+                   {
+                       "fieldname":  "visit_datetime",
+                       "label":  "Visit Datetime",
+                       "fieldtype":  "Datetime",
+                       "default":  "Now",
+                       "reqd":  1,
+                       "in_list_view":  1,
+                       "in_standard_filter":  1
+                   },
+                   {
+                       "fieldname":  "visit_type",
+                       "label":  "Visit Type",
+                       "fieldtype":  "Select",
+                       "options":  "Visit\nCollection\nActivation\nSales Order Taken",
+                       "default":  "Visit",
+                       "reqd":  1,
+                       "in_list_view":  1,
+                       "in_standard_filter":  1
+                   },
+                   {
+                       "fieldname":  "territory",
+                       "label":  "Territory",
+                       "fieldtype":  "Link",
+                       "options":  "Territory",
+                       "in_standard_filter":  1
+                   },
+                   {
+                       "fieldname":  "sales_person",
+                       "label":  "Sales Person",
+                       "fieldtype":  "Link",
+                       "options":  "Sales Person",
+                       "in_list_view":  1,
+                       "in_standard_filter":  1
+                   },
+                   {
+                       "fieldname":  "receipt_number",
+                       "label":  "Receipt Number",
+                       "fieldtype":  "Data",
+                       "in_list_view":  1,
+                       "in_standard_filter":  1
+                   },
+                   {
+                       "fieldname":  "location",
+                       "label":  "Location",
+                       "fieldtype":  "Geolocation"
+                   },
+                   {
+                       "fieldname":  "notes",
+                       "label":  "Notes",
+                       "fieldtype":  "Small Text"
+                   },
+                   {
+                       "fieldname":  "reference_doctype",
+                       "label":  "Reference DocType",
+                       "fieldtype":  "Link",
+                       "options":  "DocType",
+                       "read_only":  1,
+                       "no_copy":  1
+                   },
+                   {
+                       "fieldname":  "reference_name",
+                       "label":  "Reference Name",
+                       "fieldtype":  "Dynamic Link",
+                       "options":  "reference_doctype",
+                       "read_only":  1,
+                       "no_copy":  1
+                   }
+               ],
+    "permissions":  [
+                        {
+                            "role":  "System Manager",
+                            "read":  1,
+                            "write":  1,
+                            "create":  1,
+                            "delete":  1,
+                            "report":  1,
+                            "export":  1,
+                            "print":  1,
+                            "share":  1
+                        },
+                        {
+                            "role":  "Sales Manager",
+                            "read":  1,
+                            "write":  1,
+                            "create":  1,
+                            "report":  1,
+                            "export":  1,
+                            "print":  1
+                        },
+                        {
+                            "role":  "Mobile User",
+                            "read":  1,
+                            "create":  1
+                        }
+                    ]
+}
