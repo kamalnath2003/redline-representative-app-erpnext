@@ -20,6 +20,27 @@ class PrefetchService {
   static bool _ranThisSession = false;
   static bool _refreshingOfflineData = false;
 
+  /// Starts a quiet refresh after every successful sign-in. The caller should
+  /// use `unawaited` so authentication/navigation never waits for large item
+  /// and customer catalogs to download.
+  static Future<void> refreshCatalogsAfterLogin() async {
+    if (_refreshingOfflineData) return;
+    _refreshingOfflineData = true;
+    try {
+      if (!await SyncStatusService().checkNow()) return;
+      await Future.wait([
+        _captureRefresh(_warmCustomerMaster),
+        _captureRefresh(() async {
+          await ItemCatalogService.sync();
+        }),
+      ]);
+    } catch (_) {
+      // Login must remain usable if the best-effort catalog refresh fails.
+    } finally {
+      _refreshingOfflineData = false;
+    }
+  }
+
   static Future<bool> refreshOfflineData({
     void Function(String stage)? onProgress,
   }) async {

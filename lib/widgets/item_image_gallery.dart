@@ -62,11 +62,9 @@ class _ItemImageThumbnailState extends State<ItemImageThumbnail> {
   }
 
   Future<String?> _loadImage() {
-    final url = widget.imageUrl;
-    if (url == null || url.trim().isEmpty) return Future.value(null);
-    return ItemImageService.cachedPrimaryImagePath(
+    return ItemImageService.cachedItemThumbnailPath(
       itemCode: widget.itemCode,
-      imageUrl: url,
+      primaryImageUrl: widget.imageUrl,
     );
   }
 
@@ -81,12 +79,30 @@ class _ItemImageThumbnailState extends State<ItemImageThumbnail> {
           builder: (context, snapshot) {
             final path = snapshot.data;
             if (path == null) return _imagePlaceholder();
+            if (!path.toLowerCase().endsWith('.svg')) {
+              return Image.file(
+                File(path),
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => _attachmentFallback(),
+              );
+            }
             return _buildImage(path, BoxFit.cover, _imagePlaceholder());
           },
         ),
       ),
     );
   }
+
+  Widget _attachmentFallback() => FutureBuilder<String?>(
+    future: ItemImageService.cachedAttachmentThumbnailPath(
+      itemCode: widget.itemCode,
+    ),
+    builder: (context, snapshot) {
+      final path = snapshot.data;
+      if (path == null) return _imagePlaceholder();
+      return _buildImage(path, BoxFit.cover, _imagePlaceholder());
+    },
+  );
 }
 
 class _ItemImageGallerySheet extends StatefulWidget {

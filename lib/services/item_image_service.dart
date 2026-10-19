@@ -101,6 +101,47 @@ class ItemImageService {
     return null;
   }
 
+  /// Returns the item's cached primary image, or the first downloaded image
+  /// attachment when the Item.image thumbnail has not been cached yet.
+  static Future<String?> cachedItemThumbnailPath({
+    required String itemCode,
+    String? primaryImageUrl,
+  }) async {
+    if (primaryImageUrl != null && primaryImageUrl.trim().isNotEmpty) {
+      final primary = await cachedPrimaryImagePath(
+        itemCode: itemCode,
+        imageUrl: primaryImageUrl,
+      );
+      if (primary != null) return primary;
+    }
+
+    return cachedAttachmentThumbnailPath(itemCode: itemCode);
+  }
+
+  static Future<String?> cachedAttachmentThumbnailPath({
+    required String itemCode,
+  }) async {
+    final cached = await CacheService.readCached(
+      'Item_image_attachments',
+      itemCode,
+    );
+    for (final row in cached?.rows ?? const <Map<String, dynamic>>[]) {
+      if (!isImageAttachment(row)) continue;
+      final fileUrl = row['file_url']?.toString() ?? '';
+      if (fileUrl.isEmpty) continue;
+      final localPath = await _localOrDownload(
+        itemCode: itemCode,
+        name: row['name']?.toString() ?? fileUrl,
+        fileName: row['file_name']?.toString() ?? p.basename(fileUrl),
+        fileUrl: fileUrl,
+        contentType: row['content_type']?.toString() ?? '',
+        allowDownload: false,
+      );
+      if (localPath != null) return localPath;
+    }
+    return null;
+  }
+
   static Future<List<ItemImageAttachment>> syncItemImages({
     required String itemCode,
     String? primaryImageUrl,
@@ -152,11 +193,20 @@ class ItemImageService {
             if (filesByName.isEmpty) rethrow;
           }
 
-          final images = filesByName.values.where(isImageAttachment).toList();
+          final candidates = filesByName.values.where(isImageAttachment);
+          final imagesByPath = <String, Map<String, dynamic>>{};
+          for (final row in candidates) {
+            final url = row['file_url']?.toString() ?? '';
+            if (url.isEmpty) continue;
+            imagesByPath.putIfAbsent(_canonicalFilePath(url), () => row);
+          }
+          final images = imagesByPath.values.toList();
           if (primaryImageUrl != null && primaryImageUrl.trim().isNotEmpty) {
             final normalizedPrimary = primaryImageUrl.trim();
             final alreadyIncluded = images.any(
-              (row) => row['file_url']?.toString() == normalizedPrimary,
+              (row) =>
+                  _canonicalFilePath(row['file_url']?.toString() ?? '') ==
+                  _canonicalFilePath(normalizedPrimary),
             );
             if (!alreadyIncluded) {
               images.insert(0, {
@@ -188,9 +238,11 @@ class ItemImageService {
     }
 
     final images = <ItemImageAttachment>[];
+    final seenPaths = <String>{};
     for (final row in records.where(isImageAttachment)) {
       final fileUrl = row['file_url']?.toString() ?? '';
       if (fileUrl.isEmpty) continue;
+      if (!seenPaths.add(_canonicalFilePath(fileUrl))) continue;
       final name = row['name']?.toString() ?? fileUrl;
       final fileName = row['file_name']?.toString() ?? p.basename(fileUrl);
       final contentType = row['content_type']?.toString() ?? '';
@@ -276,6 +328,17 @@ class ItemImageService {
       'image/avif' => '.avif',
       _ => '.img',
     };
+  }
+
+  static String _canonicalFilePath(String rawUrl) {
+    final uri = Uri.tryParse(rawUrl);
+    final path = uri?.path.isNotEmpty == true ? uri!.path : rawUrl;
+    final normalized = path.replaceAll('\\', '/').toLowerCase();
+    try {
+      return Uri.decodeComponent(normalized);
+    } on FormatException {
+      return normalized;
+    }
   }
 
   static String _stableHash(String value) {

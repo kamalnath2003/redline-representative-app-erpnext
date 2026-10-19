@@ -5,6 +5,7 @@ import 'package:local_auth/local_auth.dart';
 import 'dart:async';
 
 import '../services/auth_service.dart';
+import '../services/prefetch_service.dart';
 import '../services/push_notification_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_logo.dart';
@@ -123,6 +124,7 @@ class _AuthScreenState extends State<AuthScreen> {
         }
       }
       unawaited(PushNotificationService.registerForCurrentUser());
+      unawaited(PrefetchService.refreshCatalogsAfterLogin());
       if (!mounted) return;
       context.go('/welcome');
     } on AuthException catch (e) {
@@ -180,6 +182,7 @@ class _AuthScreenState extends State<AuthScreen> {
         password: _passwordController.text,
       );
       unawaited(PushNotificationService.registerForCurrentUser());
+      unawaited(PrefetchService.refreshCatalogsAfterLogin());
 
       if (!mounted) return;
       context.go('/welcome');

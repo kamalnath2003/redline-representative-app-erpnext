@@ -516,18 +516,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   Future<void> _addItem() async {
     String? brandFilter;
     final brands = await ItemCatalogService.cachedBrands();
-    final result = await showMultiItemPicker(
-      context: context,
-      title: 'Select Items',
-      brands: brands,
-      selectedBrand: brandFilter,
-      onBrandChanged: (value) => brandFilter = value,
-      search: (query) async {
-        final rows = await ItemCatalogService.searchCached(
-          query: query,
-          brand: brandFilter,
-        );
-        return rows.map((item) {
+    List<PickedRecord> toRecords(List<Map<String, dynamic>> rows) =>
+        rows.map((item) {
           final code = item['name'] as String;
           final name = (item['item_name'] as String?) ?? code;
           final prices = item['selling_price_by_list'] as Map?;
@@ -548,7 +538,26 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             ),
           );
         }).toList();
-      },
+    final result = await showMultiItemPicker(
+      context: context,
+      title: 'Select Items',
+      brands: brands,
+      selectedBrand: brandFilter,
+      onBrandChanged: (value) => brandFilter = value,
+      search: (query) async => toRecords(
+        await ItemCatalogService.searchCached(
+          query: query,
+          brand: brandFilter,
+          priceList: _priceList,
+        ),
+      ),
+      backgroundSearch: (query) async => toRecords(
+        await ItemCatalogService.searchWithPriceList(
+          query: query,
+          brand: brandFilter,
+          priceList: _priceList,
+        ),
+      ),
     );
     if (result == null || result.isEmpty) return;
     final pickedLines = <_InvoiceLine>[];

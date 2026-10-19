@@ -77,6 +77,7 @@ Future<List<PickedRecord>?> showMultiItemPicker({
   required BuildContext context,
   required String title,
   required Future<List<PickedRecord>> Function(String query) search,
+  Future<List<PickedRecord>> Function(String query)? backgroundSearch,
   required List<String> brands,
   required void Function(String? brand) onBrandChanged,
   required String? selectedBrand,
@@ -86,6 +87,7 @@ Future<List<PickedRecord>?> showMultiItemPicker({
       builder: (context) => _SearchPickerScreen(
         title: title,
         search: search,
+        backgroundSearch: backgroundSearch,
         hintText: 'Search items...',
         multiSelect: true,
         brands: brands,
@@ -134,6 +136,7 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
   final Map<String, int> _quantities = {};
   final Map<String, PickedRecord> _selectedRecords = {};
   int _searchGeneration = 0;
+  int _thumbnailGeneration = 0;
 
   @override
   void initState() {
@@ -365,14 +368,21 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  if (record.imageUrl != null && record.imageUrl!.isNotEmpty)
+                  if ((record.imageUrl != null &&
+                          record.imageUrl!.isNotEmpty) ||
+                      widget.multiSelect)
                     Padding(
                       padding: const EdgeInsets.only(right: 10),
                       child: GestureDetector(
                         onTap: record.onImageTap == null
                             ? null
-                            : () => record.onImageTap!(context),
+                            : () async {
+                                await record.onImageTap!(context);
+                                if (!mounted) return;
+                                setState(() => _thumbnailGeneration++);
+                              },
                         child: ItemImageThumbnail(
+                          key: ValueKey('${record.name}-$_thumbnailGeneration'),
                           itemCode: record.name,
                           imageUrl: record.imageUrl,
                           size: widget.multiSelect ? 68 : 54,
