@@ -1,0 +1,4 @@
+[submodule "ERP_NEXT/frappe_docker"]
+	path = ERP_NEXT/frappe_docker
+	url = https://github.com/kamalnath2003/redline-representative-app-erpnext.git
+	branch = rcd-erpnext-deployment
