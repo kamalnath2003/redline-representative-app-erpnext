@@ -230,7 +230,7 @@ class PdfBuilderService {
                   style: pw.TextStyle(font: regularFont, fontSize: 10),
                 ),
                 pw.Text(
-                  '${_fmt(currentBalance)} EGP',
+                  '${_fmt(currentBalance)} INR',
                   style: pw.TextStyle(font: boldFont, fontSize: 13),
                 ),
               ],

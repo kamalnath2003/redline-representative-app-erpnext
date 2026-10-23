@@ -270,7 +270,7 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                '${currentBalance.toStringAsFixed(2)} EGP',
+                '${currentBalance.toStringAsFixed(2)} INR',
                 style: const TextStyle(
                   color: AppColors.white,
                   fontSize: 22,
@@ -336,7 +336,7 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
               ),
             const SizedBox(height: 2),
             Text(
-              'Balance: ${row.balance.toStringAsFixed(2)} EGP',
+              'Balance: ${row.balance.toStringAsFixed(2)} INR',
               style: const TextStyle(color: AppColors.midGray, fontSize: 11),
             ),
           ],
@@ -432,7 +432,7 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
           if (doc['grand_total'] != null) ...[
             const SizedBox(height: 6),
             Text(
-              'Total: ${doc['grand_total']} EGP',
+              'Total: ${doc['grand_total']} INR',
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
             ),
           ],
@@ -458,7 +458,7 @@ class _CustomerStatementScreenState extends State<CustomerStatementScreen> {
           )
         else ...[
           if (paidAmount != null)
-            Text('Amount: $paidAmount EGP', style: const TextStyle(fontSize: 12.5)),
+            Text('Amount: $paidAmount INR', style: const TextStyle(fontSize: 12.5)),
           if (modeOfPayment != null)
             Text(
               'Payment Method: $modeOfPayment',

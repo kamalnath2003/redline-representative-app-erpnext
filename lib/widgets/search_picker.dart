@@ -16,6 +16,7 @@ class PickedRecord {
     this.imageUrl,
     this.price,
     this.stock,
+    this.isStockItem,
     this.quantity = 0,
     this.onImageTap,
   });
@@ -34,6 +35,8 @@ class PickedRecord {
   final String? imageUrl;
   final num? price;
   final num? stock;
+  /// Whether ERPNext requires a source warehouse for this item.
+  final bool? isStockItem;
   final int quantity;
   final Future<void> Function(BuildContext context)? onImageTap;
 }
@@ -274,6 +277,7 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
                                       quantity: entry.value,
                                       price: record.price,
                                       stock: record.stock,
+                                      isStockItem: record.isStockItem,
                                       imageUrl: record.imageUrl,
                                     );
                                   })

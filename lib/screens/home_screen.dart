@@ -292,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: icon,
           title: title,
           subtitle: subtitle,
-          amount: amount != null ? '$amount EGP' : '—',
+          amount: amount != null ? '$amount INR' : '—',
           creation: DateTime.tryParse((d['creation'] as String?) ?? ''),
         );
       }).toList();
@@ -791,7 +791,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 10),
           if (target == null) ...[
             Text(
-              'No target set for this month — achieved: ${achieved.toStringAsFixed(0)} EGP',
+              'No target set for this month — achieved: ${achieved.toStringAsFixed(0)} INR',
               style: const TextStyle(color: AppColors.midGray, fontSize: 12.5),
             ),
           ] else ...[
@@ -799,14 +799,14 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${achieved.toStringAsFixed(0)} EGP',
+                  '${achieved.toStringAsFixed(0)} INR',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
                   ),
                 ),
                 Text(
-                  'Target: ${target.toStringAsFixed(0)} EGP',
+                  'Target: ${target.toStringAsFixed(0)} INR',
                   style: const TextStyle(
                     color: AppColors.midGray,
                     fontSize: 12,

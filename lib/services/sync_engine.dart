@@ -433,7 +433,7 @@ class SyncEngine {
     String? modeOfPayment,
     String? account,
   }) async {
-    body['currency'] = 'EGP';
+    body['currency'] = 'INR';
     body['exchange_rate'] = 1;
     body['approval_status'] = 'Approved';
     body['is_paid'] = 1;

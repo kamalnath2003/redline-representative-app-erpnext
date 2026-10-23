@@ -272,7 +272,7 @@ class _DueInvoicesScreenState extends State<DueInvoicesScreen> {
                   style: TextStyle(color: AppColors.midGray, fontSize: 12.5),
                 ),
                 Text(
-                  '${totalOutstanding.toStringAsFixed(0)} EGP',
+                  '${totalOutstanding.toStringAsFixed(0)} INR',
                   style: const TextStyle(
                     color: AppColors.white,
                     fontSize: 18,
@@ -358,7 +358,7 @@ class _DueInvoicesScreenState extends State<DueInvoicesScreen> {
                           ),
                         ),
                         Text(
-                          '${invoice.outstandingAmount.toStringAsFixed(0)} EGP',
+                          '${invoice.outstandingAmount.toStringAsFixed(0)} INR',
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 13.5,

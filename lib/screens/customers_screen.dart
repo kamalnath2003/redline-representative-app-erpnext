@@ -321,14 +321,14 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Credit limit: ${limit.toStringAsFixed(2)} EGP'),
+                          Text('Credit limit: ${limit.toStringAsFixed(2)} INR'),
                           Text(
-                            'Outstanding: ${outstanding.toStringAsFixed(2)} EGP',
+                            'Outstanding: ${outstanding.toStringAsFixed(2)} INR',
                           ),
                           Text(
                             available >= 0
-                                ? 'Available: ${available.toStringAsFixed(2)} EGP'
-                                : 'Over limit: ${(-available).toStringAsFixed(2)} EGP',
+                                ? 'Available: ${available.toStringAsFixed(2)} INR'
+                                : 'Over limit: ${(-available).toStringAsFixed(2)} INR',
                             style: TextStyle(
                               color: available >= 0
                                   ? AppColors.success

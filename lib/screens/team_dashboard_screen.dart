@@ -495,7 +495,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_regionAchieved.toStringAsFixed(0)} EGP',
+                  '${_regionAchieved.toStringAsFixed(0)} INR',
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                 ),
               ],
@@ -513,7 +513,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_regionExpenses.toStringAsFixed(0)} EGP',
+                  '${_regionExpenses.toStringAsFixed(0)} INR',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
@@ -566,8 +566,8 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
           const SizedBox(height: 8),
           Text(
             target != null
-                ? '${rep.achieved.toStringAsFixed(0)} / ${target.toStringAsFixed(0)} EGP'
-                : '${rep.achieved.toStringAsFixed(0)} EGP (no target set)',
+                ? '${rep.achieved.toStringAsFixed(0)} / ${target.toStringAsFixed(0)} INR'
+                : '${rep.achieved.toStringAsFixed(0)} INR (no target set)',
             style: const TextStyle(color: AppColors.midGray, fontSize: 12),
           ),
           if (target != null && target > 0) ...[
@@ -590,14 +590,14 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
               Expanded(
                 child: _kpiTile(
                   'Monthly Collections',
-                  '${rep.collections.toStringAsFixed(0)} EGP',
+                  '${rep.collections.toStringAsFixed(0)} INR',
                   AppColors.success,
                 ),
               ),
               Expanded(
                 child: _kpiTile(
                   'Monthly Expenses',
-                  '${rep.expenses.toStringAsFixed(0)} EGP',
+                  '${rep.expenses.toStringAsFixed(0)} INR',
                   AppColors.accent,
                 ),
               ),
@@ -609,7 +609,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
               Expanded(
                 child: _kpiTile(
                   'Customer Outstanding',
-                  '${rep.debt.toStringAsFixed(0)} EGP',
+                  '${rep.debt.toStringAsFixed(0)} INR',
                   AppColors.black,
                 ),
               ),

@@ -107,6 +107,7 @@ class ErpService {
     dynamic data,
     Map<String, dynamic>? formParams,
     bool isRetry = false,
+    bool isSeriesConflictRetry = false,
   }) async {
     final domain = await AuthService.currentDomain();
     final token = await AuthService.currentAccessToken();
@@ -179,6 +180,33 @@ class ErpService {
         formParams: formParams,
         isRetry: true,
       );
+    }
+
+    // Frappe allocates Sales Order names by locking a row in tabSeries.
+    // MariaDB can reject that lock with error 1020 when another request
+    // updates the same series at the same time. The failed transaction is
+    // rolled back, so retry this create once after the competing write has
+    // completed. Do not retry other 417 responses or any other POST.
+    if (method.toUpperCase() == 'POST' &&
+        response.statusCode == 417 &&
+        !isSeriesConflictRetry) {
+      final errorBody = jsonEncode(response.data);
+      final isTabSeriesConflict =
+          errorBody.contains('tabSeries') &&
+          (errorBody.contains('Record has changed since last read') ||
+              errorBody.contains('QueryDeadlockError'));
+      if (isTabSeriesConflict) {
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        return _send(
+          method,
+          path,
+          query: query,
+          data: data,
+          formParams: formParams,
+          isRetry: isRetry,
+          isSeriesConflictRetry: true,
+        );
+      }
     }
 
     if (response.statusCode != null && response.statusCode! >= 400) {

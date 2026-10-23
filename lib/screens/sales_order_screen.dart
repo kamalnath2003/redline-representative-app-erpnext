@@ -26,6 +26,7 @@ class _OrderLine {
   final String itemCode;
   final String itemName;
   double qty = 1;
+  bool isStockItem = true;
 
   /// Best-effort — looked up from `Item Price` for the customer's price
   /// list. Null if no price list is known yet or no matching price was
@@ -480,6 +481,9 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
           return PickedRecord(
             name: code,
             label: name,
+            isStockItem: item['is_stock_item'] == true ||
+                item['is_stock_item'] == 1 ||
+                item['is_stock_item']?.toString() == '1',
             imageUrl: item['image'] as String?,
             price:
                 prices?[_priceList] as num? ??
@@ -520,6 +524,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
     for (final picked in result) {
       final line = _OrderLine(itemCode: picked.name, itemName: picked.label)
         ..qty = picked.quantity.toDouble()
+        ..isStockItem = picked.isStockItem ?? true
         ..unitPrice = picked.price;
       setState(() => _lines.add(line));
       if (line.unitPrice == null) await _fetchPriceForLine(line);
@@ -937,10 +942,10 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
           ),
           title: const Text('Credit Limit Exceeded'),
           content: Text(
-            'Credit limit: ${creditLimit.toStringAsFixed(0)} EGP\n'
-            'Current outstanding: ${currentOutstanding.toStringAsFixed(0)} EGP\n'
-            'Order total: ${grandTotal.toStringAsFixed(2)} EGP\n'
-            'Projected total: ${projected.toStringAsFixed(2)} EGP\n\n'
+            'Credit limit: ${creditLimit.toStringAsFixed(0)} INR\n'
+            'Current outstanding: ${currentOutstanding.toStringAsFixed(0)} INR\n'
+            'Order total: ${grandTotal.toStringAsFixed(2)} INR\n'
+            'Projected total: ${projected.toStringAsFixed(2)} INR\n\n'
             'This order cannot be submitted because it would exceed the customer’s credit limit.',
           ),
           actions: [
@@ -1007,6 +1012,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
       return null;
     }
   }
+
   /// Always just saves a plain Draft — this app never advances a document
   /// past Draft at creation time any more. Sending it into the workflow (or
   /// a plain submit when there's no workflow) is a separate, explicit swipe
@@ -1033,172 +1039,189 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
   /// `false` هنا معناها فشل حقيقي أو إلغاء — [SwipeToConfirmButton] بيعكسها
   /// كحالة حمراء بدل ما يفترض النجاح لمجرد إن حركة السحب خلصت.
   Future<bool> _submit() async {
-    if (_customer == null || _lines.isEmpty) return false;
+      if (_customer == null || _lines.isEmpty) return false;
 
     final withinCreditLimit = await _checkCreditLimit();
     if (!withinCreditLimit) return false;
 
-    setState(() {
-      _submitting = true;
-      _error = null;
-      _lastSubmitWasQueued = false;
-    });
+      setState(() {
+        _submitting = true;
+        _error = null;
+        _lastSubmitWasQueued = false;
+      });
 
-    // Declared outside the `try` (not `final` inside it) so the `catch`
-    // block below can still reach it to enqueue an offline job — a `catch`
-    // block can't see a variable scoped to its own `try` block.
-    Map<String, dynamic>? fields;
-    try {
-      final orderLocation = await _captureOrderLocationGeoJson();
-      if (mounted && _locationStatus != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Location: $_locationStatus'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+      final missingWarehouseLines = _lines
+          .where((line) =>
+              line.isStockItem &&
+              (line.warehouse == null || line.warehouse!.trim().isEmpty))
+          .map((line) => line.itemName)
+          .toList();
+      if (missingWarehouseLines.isNotEmpty) {
+        setState(() {
+          _error =
+              'Select a source warehouse for stock item(s): ${missingWarehouseLines.join(', ')}.';
+        });
+        return false;
       }
 
-      fields = <String, dynamic>{
-        'customer': _customer!.name,
-        'items': _lines
-            .map(
-              (l) => {
-                'item_code': l.itemCode,
-                'qty': l.qty,
-                if (l.warehouse != null) 'warehouse': l.warehouse,
-              },
-            )
-            .toList(),
-        if (_deliveryDate != null)
-          'delivery_date': _deliveryDate!.toIso8601String().split('T').first,
-        if (_paymentTerms != null)
-          'payment_terms_template': _paymentTerms!.name,
-        if (_termsTemplate != null) 'tc_name': _termsTemplate!.name,
-        if (_termsController.text.trim().isNotEmpty)
-          'terms': _termsController.text.trim(),
-        if (orderLocation != null)
-          'custom_order_taken_location': orderLocation,
-      };
+      final withinCreditLimit = await _checkCreditLimit();
+      if (!withinCreditLimit) return false;
 
-      final editDoc = widget.editDoc;
-      if (editDoc != null) {
-        // Editing an existing order — same fields, `PUT` in place. No
-        // `sales_team` re-resolution (already set at creation) and no form
-        // reset/navigation-away: pop back to the detail screen the rep
-        // came from so they can then use its "resend" swipe.
-        final editName = editDoc['name'] as String;
-        if (!SyncStatusService().isOnline) {
-          await SyncEngine().enqueue(
-            type: SyncJobType.genericApiCall,
-            payload: {
-              'operation': 'update',
-              'doctype': 'Sales Order',
-              'name': editName,
-              'data': fields,
-            },
-          );
-          _lastSubmitWasQueued = true;
-          if (!mounted) return true;
+      // Declared outside the `try` (not `final` inside it) so the `catch`
+      // block below can still reach it to enqueue an offline job — a `catch`
+      // block can't see a variable scoped to its own `try` block.
+      Map<String, dynamic>? fields;
+      try {
+        final orderLocation = await _captureOrderLocationGeoJson();
+        if (mounted && _locationStatus != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Offline. Changes will be saved automatically.'),
+            SnackBar(
+              content: Text('Location: $_locationStatus'),
+              duration: const Duration(seconds: 3),
             ),
           );
+        }
+
+        fields = <String, dynamic>{
+          'customer': _customer!.name,
+          'items': _lines
+              .map(
+                (l) => {
+                  'item_code': l.itemCode,
+                  'qty': l.qty,
+                  if (l.warehouse != null) 'warehouse': l.warehouse,
+                },
+              )
+              .toList(),
+          if (_deliveryDate != null)
+            'delivery_date': _deliveryDate!.toIso8601String().split('T').first,
+          if (_paymentTerms != null)
+            'payment_terms_template': _paymentTerms!.name,
+          if (_termsTemplate != null) 'tc_name': _termsTemplate!.name,
+          if (_termsController.text.trim().isNotEmpty)
+            'terms': _termsController.text.trim(),
+          if (orderLocation != null)
+            'custom_order_taken_location': orderLocation,
+        };
+
+        final editDoc = widget.editDoc;
+        if (editDoc != null) {
+          // Editing an existing order — same fields, `PUT` in place. No
+          // `sales_team` re-resolution (already set at creation) and no form
+          // reset/navigation-away: pop back to the detail screen the rep
+          // came from so they can then use its "resend" swipe.
+          final editName = editDoc['name'] as String;
+          if (!SyncStatusService().isOnline) {
+            await SyncEngine().enqueue(
+              type: SyncJobType.genericApiCall,
+              payload: {
+                'operation': 'update',
+                'doctype': 'Sales Order',
+                'name': editName,
+                'data': fields,
+              },
+            );
+            _lastSubmitWasQueued = true;
+            if (!mounted) return true;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Offline. Changes will be saved automatically.'),
+              ),
+            );
+            Navigator.of(context).pop();
+            return true;
+          }
+          await ErpService.updateDoc('Sales Order', editName, fields);
+          if (!mounted) return true;
           Navigator.of(context).pop();
           return true;
         }
-        await ErpService.updateDoc('Sales Order', editName, fields);
-        if (!mounted) return true;
-        Navigator.of(context).pop();
-        return true;
-      }
 
-      if (!SyncStatusService().isOnline) {
-        await SyncEngine().enqueue(
-          type: SyncJobType.salesOrderCreate,
-          payload: fields,
-        );
-        _lastSubmitWasQueued = true;
-        if (!mounted) return true;
-        setState(_resetOrderForm);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Offline. Order saved and will be sent automatically.',
-            ),
-          ),
-        );
-        return true;
-      }
-
-      final salesPerson = await ErpService.resolveCurrentSalesPerson();
-      if (salesPerson != null) {
-        fields['sales_team'] = [
-          {'sales_person': salesPerson, 'allocated_percentage': 100},
-        ];
-      }
-      final created = await ErpService.createDoc('Sales Order', fields);
-
-      if (!mounted) return true;
-      setState(_resetOrderForm);
-
-      final createdName = created['name'] as String?;
-      if (createdName != null) {
-        context.push(documentDetailRoute('Sales Order', createdName));
-      }
-      return true;
-    } catch (e) {
-      final capturedFields = fields;
-      if (e is ErpException &&
-          e.isConnectivityFailure &&
-          capturedFields != null) {
-        final editDoc = widget.editDoc;
-        if (editDoc != null) {
+        if (!SyncStatusService().isOnline) {
           await SyncEngine().enqueue(
-            type: SyncJobType.genericApiCall,
-            payload: {
-              'operation': 'update',
-              'doctype': 'Sales Order',
-              'name': editDoc['name'] as String,
-              'data': capturedFields,
-            },
+            type: SyncJobType.salesOrderCreate,
+            payload: fields,
           );
           _lastSubmitWasQueued = true;
           if (!mounted) return true;
+          setState(_resetOrderForm);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'Connection unavailable. Changes will be saved automatically.',
+                'Offline. Order saved and will be sent automatically.',
               ),
             ),
           );
-          Navigator.of(context).pop();
           return true;
         }
-        await SyncEngine().enqueue(
-          type: SyncJobType.salesOrderCreate,
-          payload: capturedFields,
-        );
-        _lastSubmitWasQueued = true;
+
+        final salesPerson = await ErpService.resolveCurrentSalesPerson();
+        if (salesPerson != null) {
+          fields['sales_team'] = [
+            {'sales_person': salesPerson, 'allocated_percentage': 100},
+          ];
+        }
+        final created = await ErpService.createDoc('Sales Order', fields);
+
         if (!mounted) return true;
         setState(_resetOrderForm);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Connection unavailable. Order saved and will be sent automatically.',
-            ),
-          ),
-        );
+
+        final createdName = created['name'] as String?;
+        if (createdName != null) {
+          context.push(documentDetailRoute('Sales Order', createdName));
+        }
         return true;
-      }
-      if (!mounted) return false;
-      final message = handleErpError(context, e);
-      if (message == null) return false;
-      setState(() => _error = message);
-      return false;
-    } finally {
-      if (mounted) setState(() => _submitting = false);
+      } catch (e) {
+        final capturedFields = fields;
+        if (e is ErpException &&
+            e.isConnectivityFailure &&
+            capturedFields != null) {
+          final editDoc = widget.editDoc;
+          if (editDoc != null) {
+            await SyncEngine().enqueue(
+              type: SyncJobType.genericApiCall,
+              payload: {
+                'operation': 'update',
+                'doctype': 'Sales Order',
+                'name': editDoc['name'] as String,
+                'data': capturedFields,
+              },
+            );
+            _lastSubmitWasQueued = true;
+            if (!mounted) return true;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Connection unavailable. Changes will be saved automatically.',
+                ),
+              ),
+            );
+            Navigator.of(context).pop();
+            return true;
+          }
+          await SyncEngine().enqueue(
+            type: SyncJobType.salesOrderCreate,
+            payload: capturedFields,
+          );
+          _lastSubmitWasQueued = true;
+          if (!mounted) return true;
+          setState(_resetOrderForm);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Connection unavailable. Order saved and will be sent automatically.',
+              ),
+            ),
+          );
+          return true;
+        }
+        if (!mounted) return false;
+        final message = handleErpError(context, e);
+        if (message == null) return false;
+        setState(() => _error = message);
+        return false;
+      } finally {
+        if (mounted) setState(() => _submitting = false);
     }
   }
 
@@ -1274,7 +1297,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Text(
                             _creditLimit != null
-                                ? 'Credit limit: ${_creditLimit!.toStringAsFixed(0)} EGP'
+                                ? 'Credit limit: ${_creditLimit!.toStringAsFixed(0)} INR'
                                 : (_creditLimitStatus ??
                                       'Credit limit unavailable'),
                             style: const TextStyle(
@@ -1288,7 +1311,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Text(
                             _currentOutstanding != null
-                                ? 'Current outstanding: ${_currentOutstanding!.toStringAsFixed(0)} EGP'
+                                ? 'Current outstanding: ${_currentOutstanding!.toStringAsFixed(0)} INR'
                                 : (_outstandingStatus ??
                                       'Current outstanding unavailable'),
                             style: const TextStyle(
@@ -1438,7 +1461,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                                 const SizedBox(height: 4),
                                 Text(
                                   line.unitPrice != null
-                                      ? 'Price: ${line.unitPrice} × ${line.qty.toStringAsFixed(0)} = ${(line.unitPrice! * line.qty).toStringAsFixed(2)} EGP'
+                                      ? 'Price: ${line.unitPrice} × ${line.qty.toStringAsFixed(0)} = ${(line.unitPrice! * line.qty).toStringAsFixed(2)} INR'
                                       : (line.priceStatus ??
                                             'Price unavailable'),
                                   style: const TextStyle(
@@ -1450,7 +1473,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                                 InkWell(
                                   onTap: () => _pickWarehouseForLine(line),
                                   child: Text(
-                                    'Warehouse: ${line.warehouse ?? 'Default (automatic)'}',
+                                    'Warehouse: ${line.warehouse ?? 'Choose warehouse'}',
                                     style: const TextStyle(
                                       color: AppColors.accent,
                                       fontSize: 11.5,
@@ -1468,7 +1491,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Text(
                             grandTotal != null
-                                ? 'Estimated Total: ${grandTotal.toStringAsFixed(2)} EGP'
+                                ? 'Estimated Total: ${grandTotal.toStringAsFixed(2)} INR'
                                 : 'Total incomplete (missing prices)',
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
@@ -1551,7 +1574,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                                       ),
                                       if (amount != null)
                                         Text(
-                                          '${amount.toStringAsFixed(2)} EGP',
+                                          '${amount.toStringAsFixed(2)} INR',
                                           style: const TextStyle(
                                             color: AppColors.black,
                                             fontSize: 12,

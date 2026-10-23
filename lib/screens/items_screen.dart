@@ -266,7 +266,7 @@ class _ItemTile extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 price is num
-                    ? '${price.toStringAsFixed(2)} EGP'
+                    ? '${price.toStringAsFixed(2)} INR'
                     : 'Price unavailable',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

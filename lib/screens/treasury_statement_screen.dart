@@ -281,7 +281,7 @@ class _TreasuryStatementScreenState extends State<TreasuryStatementScreen> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          'Balance: ${row.runningBalance.toStringAsFixed(2)} EGP',
+                                          'Balance: ${row.runningBalance.toStringAsFixed(2)} INR',
                                           style: const TextStyle(
                                             color: AppColors.midGray,
                                             fontSize: 10.5,

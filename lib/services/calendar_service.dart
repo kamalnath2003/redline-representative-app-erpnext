@@ -104,7 +104,7 @@ class CalendarService {
         title: 'Payment due — $customerName',
         description:
             'Document: $documentName\n'
-            'Amount due: ${amount.toStringAsFixed(2)} EGP',
+            'Amount due: ${amount.toStringAsFixed(2)} INR',
         start: start,
         end: end,
         reminders: [
