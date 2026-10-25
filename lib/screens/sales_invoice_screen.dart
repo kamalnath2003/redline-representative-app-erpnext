@@ -1262,10 +1262,10 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           ),
           title: const Text('Credit Limit Exceeded'),
           content: Text(
-            'Credit limit: ${creditLimit.toStringAsFixed(0)} EGP\n'
-            'Current outstanding: ${currentOutstanding.toStringAsFixed(0)} EGP\n'
-            'Invoice total: ${grandTotal.toStringAsFixed(2)} EGP\n'
-            'Projected total: ${projected.toStringAsFixed(2)} EGP\n\n'
+            'Credit limit: ${creditLimit.toStringAsFixed(0)} INR\n'
+            'Current outstanding: ${currentOutstanding.toStringAsFixed(0)} INR\n'
+            'Invoice total: ${grandTotal.toStringAsFixed(2)} INR\n'
+            'Projected total: ${projected.toStringAsFixed(2)} INR\n\n'
             'This invoice cannot be submitted because it would exceed the customer’s credit limit.',
           ),
           actions: [
@@ -1922,7 +1922,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               _creditLimit != null
-                  ? 'Credit limit: ${_creditLimit!.toStringAsFixed(0)} EGP'
+                  ? 'Credit limit: ${_creditLimit!.toStringAsFixed(0)} INR'
                   : (_creditLimitStatus ?? 'Credit limit unavailable'),
               style: const TextStyle(color: AppColors.midGray, fontSize: 12),
             ),
@@ -1932,7 +1932,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               _currentOutstanding != null
-                  ? 'Current outstanding: ${_currentOutstanding!.toStringAsFixed(0)} EGP'
+                  ? 'Current outstanding: ${_currentOutstanding!.toStringAsFixed(0)} INR'
                   : (_outstandingStatus ?? 'Current outstanding unavailable'),
               style: const TextStyle(color: AppColors.midGray, fontSize: 12),
             ),
@@ -2089,7 +2089,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                   const SizedBox(height: 4),
                   Text(
                     line.unitPrice != null
-                        ? 'Price: ${line.unitPrice} × ${line.qty.toStringAsFixed(0)} = ${(line.unitPrice! * line.qty).toStringAsFixed(2)} EGP'
+                        ? 'Price: ${line.unitPrice} × ${line.qty.toStringAsFixed(0)} = ${(line.unitPrice! * line.qty).toStringAsFixed(2)} INR'
                         : (line.priceStatus ?? 'Price unavailable'),
                     style: const TextStyle(
                       color: AppColors.midGray,
@@ -2186,7 +2186,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               grandTotal != null
-                  ? '${_isReturn ? 'Estimated Return Total' : 'Estimated Total'}: ${grandTotal.toStringAsFixed(2)} EGP'
+                  ? '${_isReturn ? 'Estimated Return Total' : 'Estimated Total'}: ${grandTotal.toStringAsFixed(2)} INR'
                   : 'Total incomplete (missing prices)',
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
@@ -2264,7 +2264,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                         ),
                         if (amount != null)
                           Text(
-                            '${amount.toStringAsFixed(2)} EGP',
+                            '${amount.toStringAsFixed(2)} INR',
                             style: const TextStyle(
                               color: AppColors.black,
                               fontSize: 12,

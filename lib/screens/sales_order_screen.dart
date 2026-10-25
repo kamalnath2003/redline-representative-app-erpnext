@@ -937,10 +937,10 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
           ),
           title: const Text('Credit Limit Exceeded'),
           content: Text(
-            'Credit limit: ${creditLimit.toStringAsFixed(0)} EGP\n'
-            'Current outstanding: ${currentOutstanding.toStringAsFixed(0)} EGP\n'
-            'Order total: ${grandTotal.toStringAsFixed(2)} EGP\n'
-            'Projected total: ${projected.toStringAsFixed(2)} EGP\n\n'
+            'Credit limit: ${creditLimit.toStringAsFixed(0)} INR\n'
+            'Current outstanding: ${currentOutstanding.toStringAsFixed(0)} INR\n'
+            'Order total: ${grandTotal.toStringAsFixed(2)} INR\n'
+            'Projected total: ${projected.toStringAsFixed(2)} INR\n\n'
             'This order cannot be submitted because it would exceed the customer’s credit limit.',
           ),
           actions: [
@@ -1274,7 +1274,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Text(
                             _creditLimit != null
-                                ? 'Credit limit: ${_creditLimit!.toStringAsFixed(0)} EGP'
+                                ? 'Credit limit: ${_creditLimit!.toStringAsFixed(0)} INR'
                                 : (_creditLimitStatus ??
                                       'Credit limit unavailable'),
                             style: const TextStyle(
@@ -1288,7 +1288,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Text(
                             _currentOutstanding != null
-                                ? 'Current outstanding: ${_currentOutstanding!.toStringAsFixed(0)} EGP'
+                                ? 'Current outstanding: ${_currentOutstanding!.toStringAsFixed(0)} INR'
                                 : (_outstandingStatus ??
                                       'Current outstanding unavailable'),
                             style: const TextStyle(
@@ -1438,7 +1438,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                                 const SizedBox(height: 4),
                                 Text(
                                   line.unitPrice != null
-                                      ? 'Price: ${line.unitPrice} × ${line.qty.toStringAsFixed(0)} = ${(line.unitPrice! * line.qty).toStringAsFixed(2)} EGP'
+                                      ? 'Price: ${line.unitPrice} × ${line.qty.toStringAsFixed(0)} = ${(line.unitPrice! * line.qty).toStringAsFixed(2)} INR'
                                       : (line.priceStatus ??
                                             'Price unavailable'),
                                   style: const TextStyle(
@@ -1468,7 +1468,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Text(
                             grandTotal != null
-                                ? 'Estimated Total: ${grandTotal.toStringAsFixed(2)} EGP'
+                                ? 'Estimated Total: ${grandTotal.toStringAsFixed(2)} INR'
                                 : 'Total incomplete (missing prices)',
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
@@ -1551,7 +1551,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                                       ),
                                       if (amount != null)
                                         Text(
-                                          '${amount.toStringAsFixed(2)} EGP',
+                                          '${amount.toStringAsFixed(2)} INR',
                                           style: const TextStyle(
                                             color: AppColors.black,
                                             fontSize: 12,

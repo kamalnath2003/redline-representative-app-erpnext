@@ -1687,9 +1687,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 if (_customerCredit != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'Credit limit: ${((_customerCredit!['credit_limit'] as num?) ?? 0).toStringAsFixed(2)} EGP  •  '
-                    'Outstanding: ${((_customerCredit!['outstanding'] as num?) ?? 0).toStringAsFixed(2)} EGP  •  '
-                    'Available: ${((_customerCredit!['available'] as num?) ?? 0).toStringAsFixed(2)} EGP',
+                    'Credit limit: ${((_customerCredit!['credit_limit'] as num?) ?? 0).toStringAsFixed(2)} INR  •  '
+                    'Outstanding: ${((_customerCredit!['outstanding'] as num?) ?? 0).toStringAsFixed(2)} INR  •  '
+                    'Available: ${((_customerCredit!['available'] as num?) ?? 0).toStringAsFixed(2)} INR',
                     style: const TextStyle(
                       color: AppColors.accent,
                       fontWeight: FontWeight.w700,
@@ -1720,7 +1720,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 if (amount != null) ...[
                   const SizedBox(height: 8),
                   Text(
-                    'Total: $amount EGP',
+                    'Total: $amount INR',
                     style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
@@ -2427,7 +2427,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                           ),
                         if (amount != null)
                           Text(
-                            '${amount.toStringAsFixed(2)} EGP',
+                            '${amount.toStringAsFixed(2)} INR',
                             style: const TextStyle(
                               color: AppColors.midGray,
                               fontSize: 12,
@@ -2502,7 +2502,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   ),
                   Text('${row['allocated_percentage'] ?? 0}%'),
                   const SizedBox(width: 12),
-                  Text('${row['allocated_amount'] ?? 0} EGP'),
+                  Text('${row['allocated_amount'] ?? 0} INR'),
                 ],
               ),
             ),
