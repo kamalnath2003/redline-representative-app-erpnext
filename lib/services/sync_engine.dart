@@ -10,6 +10,7 @@ import '../local_db/sync_job_type.dart';
 import '../utils/english_ui_text.dart';
 import 'auth_service.dart';
 import 'erp_service.dart';
+import 'replacement_service.dart';
 import 'sync_status_service.dart';
 
 class _ReplayResult {
@@ -204,9 +205,38 @@ class SyncEngine {
         return _replayPhotoAttach(job, payload);
       case 'genericApiCall':
         return _replayGenericApiCall(payload);
+      case 'replacementRequestCreate':
+        return _replayReplacementRequestCreate(payload);
+      case 'replacementDeliveryComplete':
+        return _replayReplacementDeliveryComplete(payload);
       default:
         throw ErpException('Unknown job type: ${job.jobType}');
     }
+  }
+
+  /// `sales_person` is resolved at replay time inside
+  /// [ReplacementService.createAndSend], same as the Sales Order path. A
+  /// failed "Send for Approval" still leaves the Draft created, so the job
+  /// counts as sent rather than being retried into a duplicate.
+  Future<_ReplayResult> _replayReplacementRequestCreate(
+    Map<String, dynamic> payload,
+  ) async {
+    final result = await ReplacementService.createAndSend(payload);
+    return _ReplayResult(
+      ReplacementService.doctype,
+      result.doc['name'] as String,
+    );
+  }
+
+  Future<_ReplayResult> _replayReplacementDeliveryComplete(
+    Map<String, dynamic> payload,
+  ) async {
+    final name = payload['name'] as String;
+    final lines = (payload['lines'] as List)
+        .map((l) => Map<String, dynamic>.from(l as Map))
+        .toList();
+    await ReplacementService.completeDelivery(name, lines);
+    return _ReplayResult(ReplacementService.doctype, name);
   }
 
   Future<_ReplayResult> _replaySalesOrderCreate(

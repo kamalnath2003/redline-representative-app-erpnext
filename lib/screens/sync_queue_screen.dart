@@ -19,6 +19,8 @@ const _jobTypeLabels = <String, String>{
   'expenseClaimVehicleLogChain': 'Vehicle Log and Expense',
   'customerRegistrationCreate': 'Customer Registration',
   'photoAttach': 'Photo Upload',
+  'replacementRequestCreate': 'Replacement Request',
+  'replacementDeliveryComplete': 'Replacement Delivery',
 };
 
 const _statusLabels = <String, String>{

@@ -26,6 +26,11 @@ enum SyncJobType {
   customerRegistrationCreate,
   photoAttach,
 
+  /// Warranty replacement: the rep's request (create + "Send for Approval")
+  /// and the delivery person's swap confirmation (`complete_delivery`).
+  replacementRequestCreate,
+  replacementDeliveryComplete,
+
   /// Everything else that doesn't need a live-resolution step before it can
   /// be built — comments, workflow transitions (`apply_workflow`), and
   /// plain document edits. The payload carries the ready-to-send request

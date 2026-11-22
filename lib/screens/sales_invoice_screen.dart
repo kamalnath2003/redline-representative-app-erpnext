@@ -8,6 +8,7 @@ import '../local_db/sync_job_type.dart';
 import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../services/item_catalog_service.dart';
+import '../services/replacement_service.dart';
 import '../services/sync_engine.dart';
 import '../services/sync_status_service.dart';
 import '../theme/app_theme.dart';
@@ -959,6 +960,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             limit: 20,
           ),
           searchFilter: (row) {
+            if (ReplacementService.isDefectiveWarehouse(row)) return false;
             final name = (row['name'] ?? '').toString().toLowerCase();
             if (restrictToSellingWarehouses &&
                 !sellingWarehouses.contains(row['name'])) {

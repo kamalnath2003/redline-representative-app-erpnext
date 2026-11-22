@@ -76,6 +76,24 @@ const _quickActions = [
     route: '/stock-movement',
   ),
   _QuickAction(Icons.inventory_2_rounded, 'Items', route: '/items'),
+  _QuickAction(
+    Icons.published_with_changes_rounded,
+    'Replacement',
+    route: '/replacement-request',
+  ),
+];
+
+const _deliveriesAction = _QuickAction(
+  Icons.swap_horiz_rounded,
+  'My Deliveries',
+  route: '/my-deliveries',
+);
+
+/// A delivery person (Delivery User without Sales User) only swaps
+/// warranty replacements — none of the rep's selling actions apply.
+const _deliveryOnlyQuickActions = [
+  _deliveriesAction,
+  _QuickAction(Icons.inventory_2_rounded, 'Items', route: '/items'),
 ];
 
 /// Shown instead of [_quickActions] for a `WF - Region Manager` — full
@@ -137,6 +155,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loadingTreasuries = true;
 
   bool _isRegionManager = false;
+  bool _isDeliveryUser = false;
+  bool _isDeliveryOnly = false;
   bool _resolvingRole = true;
 
   ({num? targetAmount, num achievedAmount})? _performance;
@@ -168,6 +188,8 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       setState(() {
         _isRegionManager = roles.contains('WF - Region Manager');
+        _isDeliveryUser = roles.contains('Delivery User');
+        _isDeliveryOnly = _isDeliveryUser && !roles.contains('Sales User');
         _resolvingRole = false;
       });
     } catch (_) {
@@ -692,7 +714,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildQuickActions() {
-    final actions = _isRegionManager ? _managerQuickActions : _quickActions;
+    final actions = _isDeliveryOnly
+        ? _deliveryOnlyQuickActions
+        : [
+            ...(_isRegionManager ? _managerQuickActions : _quickActions),
+            if (_isDeliveryUser) _deliveriesAction,
+          ];
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),

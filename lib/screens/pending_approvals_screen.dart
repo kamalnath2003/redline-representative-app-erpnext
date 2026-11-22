@@ -51,6 +51,10 @@ const _doctypeConfigs = <String, _DoctypeConfig>{
   'Stock Entry': _DoctypeConfig('Stock Movement', [], null),
   'Expense Claim': _DoctypeConfig('Expense Claim', [], null),
   'Vehicle Log': _DoctypeConfig('Vehicle Maintenance/Fuel', [], null),
+  'Replacement Request': _DoctypeConfig('Warranty Replacement', [
+    'customer_name',
+    'customer',
+  ], null),
 };
 
 /// Generic "pending my approval" browser: pick a DocType → pick one of its

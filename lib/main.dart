@@ -21,7 +21,9 @@ import 'screens/material_request_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/payment_entry_screen.dart';
+import 'screens/my_deliveries_screen.dart';
 import 'screens/pending_approvals_screen.dart';
+import 'screens/replacement_request_screen.dart';
 import 'screens/privacy_policy_screen.dart';
 import 'screens/sales_invoice_screen.dart';
 import 'screens/sales_order_screen.dart';
@@ -149,6 +151,14 @@ final _router = GoRouter(
     GoRoute(
       path: '/pending-approvals',
       builder: (context, state) => const PendingApprovalsScreen(),
+    ),
+    GoRoute(
+      path: '/replacement-request',
+      builder: (context, state) => const ReplacementRequestScreen(),
+    ),
+    GoRoute(
+      path: '/my-deliveries',
+      builder: (context, state) => const MyDeliveriesScreen(),
     ),
     GoRoute(
       path: '/stock-movement',
